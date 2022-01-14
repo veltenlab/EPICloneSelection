@@ -1,0 +1,47 @@
+general:
+ cut_seq: GCGC
+ genome: mm10
+ pu1_motif: AGGAGT 
+
+input:
+ type: bed
+
+sample_annotation:
+ sampleID: sampleID
+ bw_file: bw_file
+ cov_file: cov_file
+ cell_type: cell_type
+
+rnbeads:
+ sampleID: sampleID
+ coverage: 10
+ cell_type: cell_type
+ assembly: mm10
+
+dmcs:
+ number: 500
+ blacklist: /users/mscherer/cluster/project/Methylome/src/blacklist.txt
+ methylated: 0.95
+ unmethylated: 0.05
+ number_meth_unmeth: 100
+ coverage_threshold: 10
+ min_diff: 0.2
+
+non_cut:
+ n_amplicons: 50
+ max_cpgs: 20
+ length: 149
+ n_cgis: 5
+ n_promoters: 12
+ n_genes: 16
+ none: 17
+ min_gc: 0.45
+ max_gc: 0.55
+
+annotations:
+ tf_chip: /users/mscherer/cluster/project/Methylome/infos/BCells/TFBS_Wilson/bed/mm10/
+ enhancer_catalog: /users/mscherer/cluster/project/Methylome/infos/BCells/enhancer_catalog_lawrence/H3K27Ac.csv
+ enhancer_catalog_bed: /users/mscherer/cluster/project/Methylome/infos/BCells/enhancer_catalog_lawrence/H3K27Ac_mm10.bed
+ pu1_chip: /users/mscherer/cluster/project/Methylome/data/external/ZhangChIP/GSM774291_FLDN1PU.1I_mm10.bed
+ hema_tf_motifs: /users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/Robert_max_TFBSs.csv
+
