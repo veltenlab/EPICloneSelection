@@ -8,7 +8,7 @@ library(data.table)
 library(RnBeads)
 library(RnBeads.mm10)
 
-res_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH_subsampled//'
+res_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH_subsampled/GSM1274424/'
 sample_name <- 'qFDRP_GSM1274424'
 out_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/'
 all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_HSCs.csv',
@@ -38,11 +38,15 @@ qfdrp <- data.frame(Chromosome=seqnames(annotation),
                     End=end(annotation),
                     qFDRP=qfdrp)
 res <- checkForCutSite(qfdrp,
-                       number=1000,
+                       number=5000,
                        config=config_file, 
                        sort.col='qFDRP')
 out_folder <- file.path(out_folder, paste0('filtered_', sample_name))
 if(!dir.exists(out_folder)){
   system(paste('mkdir', out_folder))
 }
+tfbs_sites <- colnames(res)[(which(colnames(res)=='GCContent')+1):ncol(res)]
+tfbs_frame <- res[, tfbs_sites]
+all_nas <- apply(tfbs_frame, 1, function(x)all(is.na(x)))
+res <- res[!all_nas, ]
 write.csv(res, paste0(out_folder, '/filtered_', sample_name, '.csv'))

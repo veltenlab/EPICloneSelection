@@ -10,10 +10,10 @@ library(RnBeads.mm10)
 
 rnb_set_path <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211004_reduced/cluster_run/preprocessing_RnBSet/'
 out_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/IMS/'
-all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_HSCs.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP1.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP2.csv')
+all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_HSC.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP1.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP2.csv')
 config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
 config <- yaml.load_file(config_file)
 

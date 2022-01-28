@@ -1,7 +1,8 @@
 general:
  cut_seq: GCGC
  genome: mm10
- pu1_motif: AGGAGT 
+ pu1_motif: AGGAGT
+ max_cpgs: 10
 
 input:
  type: bed
@@ -28,15 +29,15 @@ dmcs:
  min_diff: 0.2
 
 non_cut:
- n_amplicons: 50
+ n_amplicons: 75
  max_cpgs: 20
- length: 149
- n_cgis: 5
- n_promoters: 12
- n_genes: 16
- none: 17
- min_gc: 0.45
- max_gc: 0.55
+ length: 249
+ n_cgis: 10
+ n_promoters: 18
+ n_genes: 24
+ none: 23
+ min_gc: 0.40
+ max_gc: 0.50
 
 annotations:
  tf_chip: /users/mscherer/cluster/project/Methylome/infos/BCells/TFBS_Wilson/bed/mm10/

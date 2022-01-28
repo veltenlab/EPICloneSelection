@@ -25,6 +25,7 @@ checkForCutSite <- function(dat,
                    'HoxD'=GRanges('chr2:74665000-74765000'))
   config <- yaml.load_file(config)
   cut.seq <- DNAString(config[['general']][['cut_seq']])
+  max.cpgs <- as.numeric(config[['general']][['max_cpgs']])
   hema.motifs <- read.csv(config[['annotations']][['hema_tf_motifs']])
   pu1.motif <- DNAString(config[['general']][['pu1_motif']])
   pu1.chip <- read.table(config[['annotations']][['pu1_chip']])
@@ -41,7 +42,11 @@ checkForCutSite <- function(dat,
   }else{
     stop("Genome version '", gen.version, "' not supported")
   }
-  dat <- dat[order(rowMeans(dat[, sort.col, drop=FALSE]), decreasing=decreasing),]
+  if(sort.col=='random'){
+    dat <- dat[sample(1:nrow(dat), nrow(dat)),]
+  }else{
+    dat <- dat[order(rowMeans(dat[, sort.col, drop=FALSE]), decreasing=decreasing),]
+  }
   i <- 1
   num <- 0
   vec.all <- c()
@@ -62,8 +67,9 @@ checkForCutSite <- function(dat,
   for(tf in tfs.all){
     dat[,tf] <- NA
   }
-  genes <- unlist(rnb.get.annotation('genes',assembly = 'mm10'))
-  promoters <- unlist(rnb.get.annotation('promoters',assembly = 'mm10'))
+  cpgs <- makeGRangesFromDataFrame(rnb.annotation2data.frame(rnb.get.annotation("CpG", assembly = gen.version)))
+  genes <- unlist(rnb.get.annotation('genes',assembly = gen.version))
+  promoters <- unlist(rnb.get.annotation('promoters',assembly = gen.version))
   reg.elements <- read.csv(config[['annotations']][['enhancer_catalog']])
   row.names(reg.elements) <- paste0(reg.elements$Chr,'_',reg.elements$Start)
   reg.elements.tab <- read.table(config[['annotations']][['enhancer_catalog_bed']],sep='\t')
@@ -79,71 +85,76 @@ checkForCutSite <- function(dat,
     res <- matchPattern(cut.seq,sel.seq)
     extended.region.start <- region.start-200
     extended.region.end <- region.end+200
-    extended.region.seq <- seq[extended.region.start:extended.region.end]
-    res.extended <- matchPattern(cut.seq,extended.region.seq)
-    if(length(res)==1 & length(res.extended)==1){
-      dat$regionStart[i] <- region.start
-      dat$regionEnd[i] <- region.end
-      dat$cutsiteInRegion[i] <- paste0(start(res), '-', end(res))
-      freq <- alphabetFrequency(extended.region.seq)
-      dat$GCContent[i] <- (freq['C']+freq['G'])/length(extended.region.seq)
-      region.gr <- GRanges(paste0(chr,':',region.start,'-',region.end))
-      op <- findOverlaps(region.gr,genes)
-      if(length(op)>0){
-        dat$gene[i] <- paste(values(genes)$symbol[subjectHits(op)],collapse=',')
-      }else{
-        dat$gene[i] <- NA
-      }
-      op <- findOverlaps(region.gr,promoters)
-      if(length(op)>0){
-        dat$promoter[i] <- paste(values(promoters)$symbol[subjectHits(op)],collapse=',')
-      }else{
-        dat$promoter[i] <- NA
-      }
-      op <- which(unlist(sapply(hox_cluster, function(x,y){
-        length(queryHits(findOverlaps(x,y)))>0
-      }, y=region.gr)))
-      if(length(op)>0){
-        dat$Hox[i] <- names(hox_cluster)[op]
-      }
-      op <- findOverlaps(region.gr,reg.elements.gr)
-      if(length(op)>0){
-        reg.element <- unname(unlist(values(reg.elements.gr))[subjectHits(op)])
-        dat$enhancer_annotation[i] <- paste(reg.elements[reg.element,'Annotation'],collapse=',')
-        dat$enhancer_annotation_gene_name[i] <- paste(reg.elements[reg.element,'Gene.Name'],collapse=',')
-      }else{
-        dat$enhancer_annotation[i] <- NA
-        dat$enhancer_annotation_gene_name[i] <- NA
-      }
-      for(j in 1:length(tfs.all)){
-        tf.gr <- makeGRangesFromDataFrame(read.table(tfs.files.all[[j]],sep = '\t'),seqnames.field = 'V1', start.field = 'V2', end.field = 'V3')
-        op <- findOverlaps(region.gr,tf.gr)
+    cpg_count <- length(findOverlaps(GRanges(paste0(chr, ':',  extended.region.start, '-', extended.region.end)),
+                                     cpgs))/2
+    if(cpg_count<max.cpgs){
+      extended.region.seq <- seq[extended.region.start:extended.region.end]
+      res.extended <- matchPattern(cut.seq,extended.region.seq)
+      if(length(res)==1 & length(res.extended)==1){
+        dat$regionStart[i] <- region.start
+        dat$regionEnd[i] <- region.end
+        dat$cutsiteInRegion[i] <- paste0(start(res), '-', end(res))
+        freq <- alphabetFrequency(extended.region.seq)
+        dat$GCContent[i] <- (freq['C']+freq['G'])/length(extended.region.seq)
+        region.gr <- GRanges(paste0(chr,':',region.start,'-',region.end))
+        op <- findOverlaps(region.gr,genes)
         if(length(op)>0){
-          dat[i,tfs.all[j]] <- tfs.all[j]
+          dat$gene[i] <- paste(values(genes)$symbol[subjectHits(op)],collapse=',')
         }else{
-          dat[i,tfs.all[j]] <- NA
+          dat$gene[i] <- NA
         }
-      }
-      tf.region.start <- region.start-10
-      tf.region.end <- region.end+10
-      tf.region.seq <- seq[tf.region.start:tf.region.end]
-      pattern.match <- matchPattern(pu1.motif, tf.region.seq, max.mismatch = 1)
-      if(length(pattern.match)>0){
-        dat[i, 'pu1_motif'] <- 'PU1'
-      }
-      op <- findOverlaps(region.gr, pu1.chip)
-      if(length(op)>0){
-        dat[i, 'pu1_chip'] <- 'PU1'
-      }
-      for(j in 1:nrow(hema.motifs)){
-        tf.name <- hema.motifs[j , 'TF']
-        pattern.match <- matchPattern(hema.motifs[j, 'Motif'], tf.region.seq, max.mismatch = 1)
+        op <- findOverlaps(region.gr,promoters)
+        if(length(op)>0){
+          dat$promoter[i] <- paste(values(promoters)$symbol[subjectHits(op)],collapse=',')
+        }else{
+          dat$promoter[i] <- NA
+        }
+        op <- which(unlist(sapply(hox_cluster, function(x,y){
+          length(queryHits(findOverlaps(x,y)))>0
+        }, y=region.gr)))
+        if(length(op)>0){
+          dat$Hox[i] <- names(hox_cluster)[op]
+        }
+        op <- findOverlaps(region.gr,reg.elements.gr)
+        if(length(op)>0){
+          reg.element <- unname(unlist(values(reg.elements.gr))[subjectHits(op)])
+          dat$enhancer_annotation[i] <- paste(reg.elements[reg.element,'Annotation'],collapse=',')
+          dat$enhancer_annotation_gene_name[i] <- paste(reg.elements[reg.element,'Gene.Name'],collapse=',')
+        }else{
+          dat$enhancer_annotation[i] <- NA
+          dat$enhancer_annotation_gene_name[i] <- NA
+        }
+        for(j in 1:length(tfs.all)){
+          tf.gr <- makeGRangesFromDataFrame(read.table(tfs.files.all[[j]],sep = '\t'),seqnames.field = 'V1', start.field = 'V2', end.field = 'V3')
+          op <- findOverlaps(region.gr,tf.gr)
+          if(length(op)>0){
+            dat[i,tfs.all[j]] <- tfs.all[j]
+          }else{
+            dat[i,tfs.all[j]] <- NA
+          }
+        }
+        tf.region.start <- region.start-10
+        tf.region.end <- region.end+10
+        tf.region.seq <- seq[tf.region.start:tf.region.end]
+        pattern.match <- matchPattern(pu1.motif, tf.region.seq, max.mismatch = 1)
         if(length(pattern.match)>0){
-          dat[i, tf.name] <- tf.name
+          dat[i, 'pu1_motif'] <- 'PU1'
         }
+        op <- findOverlaps(region.gr, pu1.chip)
+        if(length(op)>0){
+          dat[i, 'pu1_chip'] <- 'PU1'
+        }
+        for(j in 1:nrow(hema.motifs)){
+          tf.name <- hema.motifs[j , 'TF']
+          pattern.match <- matchPattern(hema.motifs[j, 'Motif'], tf.region.seq, max.mismatch = 1)
+          if(length(pattern.match)>0){
+            dat[i, tf.name] <- tf.name
+          }
+        }
+        vec.all <- c(vec.all,i)
+        num <- num+1
+        print(num)
       }
-      vec.all <- c(vec.all,i)
-      num <- num+1
     }
     i <- i+1
   }

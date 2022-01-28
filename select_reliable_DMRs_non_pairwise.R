@@ -29,5 +29,11 @@ dmrs <- lapply(all.comparisons,function(comp){
 }) 
 names(dmrs) <- c('HSCs', 'MPP', 'MPP1', 'MPP2')
 for(n in names(dmrs)){
-    write.csv(dmrs[[n]],file.path(output, paste0('high_', n, '.csv')))
+    res <- dmrs[[n]]
+    tfbs_sites <- colnames(res)[(which(colnames(res)=='GCContent')+1):ncol(res)]
+    tfbs_sites <- tfbs_sites[-(length(tfbs_sites))]
+    tfbs_frame <- res[, tfbs_sites]
+    all_nas <- apply(tfbs_frame, 1, function(x)all(is.na(x)))
+    res <- res[!all_nas, ]
+    write.csv(res,file.path(output, paste0('high_', n, '.csv')))
 }
