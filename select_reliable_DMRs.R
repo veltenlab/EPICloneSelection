@@ -72,15 +72,16 @@ all.files <- list.files(output, full.names = TRUE, pattern = 'high')
 dmrs.all <- lapply(all.files, function(dmr){
     print(dmr)
     dmr <- read.csv(dmr)
-    checkForCutSite(dmr,
-                    number=400,
+    dmr <- checkForCutSite(dmr,
+                    number=nrow(dmr),
                     config=config_file,
                     sort.col=c('mean.diff', 'mean.diff.1', 'mean.diff.2'))
+    print(nrow(dmr))
     tfbs_sites <- colnames(dmr)[(which(colnames(dmr)=='GCContent')+1):ncol(dmr)]
     tfbs_frame <- dmr[, tfbs_sites]
     all_nas <- apply(tfbs_frame, 1, function(x)all(is.na(x)))
+    print(sum(!all_nas))
     dmr <- dmr[!all_nas, ]
-    
 })
 all.names <- list.files(output, pattern = 'high')
 all.names <- gsub('high_','high_filtered_',all.names)

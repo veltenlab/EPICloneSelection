@@ -33,6 +33,7 @@ checkForCutSite <- function(dat,
   pu1.chip$V3 <- as.numeric(pu1.chip$V3)
   pu1.chip <- makeGRangesFromDataFrame(na.omit(pu1.chip), seqnames.field = 'V1', start.field = 'V2', end.field = 'V3', strand.field = 'V6')
   gen.version <- config[['general']][['genome']]
+  variable_genes <- as.character(read.csv(config[['annotations']][['variable_genes']])[, 2])
   if(gen.version=='mm10'){
     suppressPackageStartupMessages(library(BSgenome.Mmusculus.UCSC.mm10))
     genome <- BSgenome.Mmusculus.UCSC.mm10
@@ -61,6 +62,8 @@ checkForCutSite <- function(dat,
   dat$pu1_chip <- NA
   dat$Hox <- NA
   dat$GCContent <- NA
+  dat$ClosestVariableGene <- NA
+  dat$ClosestVariableGeneDistance <- NA
   dat[hema.motifs$TF] <- NA
   tfs.files.all <- list.files(config[['annotations']][['tf_chip']],full.names=TRUE)
   tfs.all <- gsub('.bed', '', list.files(config[['annotations']][['tf_chip']]))
@@ -69,6 +72,8 @@ checkForCutSite <- function(dat,
   }
   cpgs <- makeGRangesFromDataFrame(rnb.annotation2data.frame(rnb.get.annotation("CpG", assembly = gen.version)))
   genes <- unlist(rnb.get.annotation('genes',assembly = gen.version))
+  names(genes) <- gsub('chr[[:alnum:]][[:punct:]]', '', names(genes))
+  names(genes) <- gsub('chr[[:alnum:]][[:alnum:]][[:punct:]]', '', names(genes))
   promoters <- unlist(rnb.get.annotation('promoters',assembly = gen.version))
   reg.elements <- read.csv(config[['annotations']][['enhancer_catalog']])
   row.names(reg.elements) <- paste0(reg.elements$Chr,'_',reg.elements$Start)
@@ -98,6 +103,9 @@ checkForCutSite <- function(dat,
         dat$GCContent[i] <- (freq['C']+freq['G'])/length(extended.region.seq)
         region.gr <- GRanges(paste0(chr,':',region.start,'-',region.end))
         op <- findOverlaps(region.gr,genes)
+        closest_variable_gene <- distance(region.gr, genes[variable_genes])
+        dat$ClosestVariableGene[i] <- paste(values(genes)$symbol[which.min(closest_variable_gene)],collapse=',')
+        dat$ClosestVariableGeneDistance[i] <- min(closest_variable_gene, na.rm = TRUE)
         if(length(op)>0){
           dat$gene[i] <- paste(values(genes)$symbol[subjectHits(op)],collapse=',')
         }else{

@@ -31,7 +31,7 @@ dmcs:
 non_cut:
  n_amplicons: 75
  max_cpgs: 20
- length: 249
+ length: 400
  n_cgis: 10
  n_promoters: 18
  n_genes: 24
@@ -41,8 +41,9 @@ non_cut:
 
 annotations:
  tf_chip: /users/mscherer/cluster/project/Methylome/infos/BCells/TFBS_Wilson/bed/mm10/
- enhancer_catalog: /users/mscherer/cluster/project/Methylome/infos/BCells/enhancer_catalog_lawrence/H3K27Ac.csv
- enhancer_catalog_bed: /users/mscherer/cluster/project/Methylome/infos/BCells/enhancer_catalog_lawrence/H3K27Ac_mm10.bed
+ enhancer_catalog: /users/mscherer/cluster/project/Methylome/infos/BCells/enhancer_catalog_Lara_Astiaso_Science/H3K27Ac.csv
+ enhancer_catalog_bed: /users/mscherer/cluster/project/Methylome/infos/BCells/enhancer_catalog_Lara_Astiaso_Science/H3K27Ac_mm10.bed
  pu1_chip: /users/mscherer/cluster/project/Methylome/data/external/ZhangChIP/GSM774291_FLDN1PU.1I_mm10.bed
  hema_tf_motifs: /users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/Robert_max_TFBSs.csv
+ variable_genes: /users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/misc/variable_genes_Nestorowa2015.csv
 

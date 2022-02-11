@@ -10,12 +10,33 @@ library(RnBeads.mm10)
 
 rnb_set_path <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211004_reduced/cluster_run/preprocessing_RnBSet/'
 out_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/IMS/'
-all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_HSC.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP1.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP2.csv')
+all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_HSC.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_MPP.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_MPP1.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_MPP2.csv')
+pdrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/PDR_GSM1274424.csv',
+          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/PDR_GSM1274425.csv',
+          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/PDR_GSM1274426.csv')
+pdr_annotations <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/annotation.RData',
+                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/annotation.RData',
+                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/annotation.RData')
 config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
 config <- yaml.load_file(config_file)
+load(pdr_annotations[1])
+for(i in 2:length(pdr_annotations)){
+  last_anno <- annotation
+  load(pdr_annotations[i])
+  op <- findOverlaps(last_anno, annotation)
+  last_anno <- last_anno[queryHits(op)]
+}
+all_pdr <- matrix(nrow=length(last_anno), ncol=length(pdrs))
+for(i in 1:length(pdr_annotations)){
+  load(pdr_annotations[i])
+  op <- findOverlaps(last_anno, annotation)
+  pdr <- read.csv(pdrs[i])
+  all_pdr[queryHits(op), i] <- pdr[subjectHits(op), ]
+}
+annotation <- last_anno
 
 source('/users/mscherer/cluster/project/Methylome/src/selection_pipeline/checkForCutSite.R')
 
@@ -45,15 +66,20 @@ too_high <- mean_covg>quantile(mean_covg, .95)
 mean_covg <- mean_covg[!too_high]
 meth_data <- meth_data[!too_high, ]
 anno_gr <- anno_gr[!too_high]
+op <- findOverlaps(anno_gr, annotation)
+pdrs <- rowMeans(all_pdr)
+pdrs <- pdrs[subjectHits(op)]
 meth_data_fr <- data.frame(Chromosome=seqnames(anno_gr),
                     Start=start(anno_gr),
                     End=end(anno_gr),
                     MeanMeth=rowMeans(meth_data),
                     MeanCovg=mean_covg)
-res <- checkForCutSite(meth_data_fr,
+meth_data_fr[queryHits(op), 'PDR'] <- pdrs
+res <- checkForCutSite(na.omit(meth_data_fr),
                        number=1000,
                        config=config_file, 
-                       sort.col='MeanCovg')
+                       sort.col='PDR',
+                       decreasing=FALSE)
 if(!dir.exists(out_folder)){
   system(paste('mkdir', out_folder))
 }

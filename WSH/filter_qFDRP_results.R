@@ -30,6 +30,7 @@ annotation <- annotation[!is_1]
 qfdrp <- qfdrp[!is_1]
 dmrs <- do.call(rbind.fill, lapply(all_dmrs, read.csv))
 dmrs_gr <- makeGRangesFromDataFrame(dmrs, end='Start')
+dmrs_gr <- resize(dmrs_gr, width = 500, fix = 'center')
 op <- findOverlaps(annotation,dmrs_gr)
 qfdrp <- qfdrp[-queryHits(op)]
 annotation <- annotation[-queryHits(op)]
@@ -38,7 +39,7 @@ qfdrp <- data.frame(Chromosome=seqnames(annotation),
                     End=end(annotation),
                     qFDRP=qfdrp)
 res <- checkForCutSite(qfdrp,
-                       number=5000,
+                       number=230,
                        config=config_file, 
                        sort.col='qFDRP')
 out_folder <- file.path(out_folder, paste0('filtered_', sample_name))

@@ -3,26 +3,26 @@
 #' the final table for upload into the MissionBio Designer
 
 library(GenomicRanges)
-n_hscs <- 115
-n_mpp1 <- 65
-n_mpp2 <- 65
-n_mpp <- 65
-n_imrs <- 100
-n_wsh <- 200
-n_non_cut <- 50
+n_hscs <- 100
+n_mpp1 <- 12
+n_mpp2 <- 17
+n_mpp <- 72
+n_imrs <- 199
+n_wsh <- 21
+n_non_cut <- 60
 n_meth <- 25
 n_unmeth <- 25
 n_primers <- 10
 
-hsc_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_HSC.csv')
-mpp1_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP1.csv')
-mpp2_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP2.csv')
-mpp_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP.csv')
-imrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/IMS/IMS_annotated.csv')
-wsh <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/filtered_qFDRP_GSM1274424/filtered_qFDRP_GSM1274424.csv')
-non_cut <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/non_cut_amplicons.csv')
-always_meth <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/meth_unmeth/always_meth_filtered.csv')
-always_unmeth <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/meth_unmeth/always_unmeth_filtered.csv')
+hsc_dmrs <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_HSC.csv')
+mpp1_dmrs <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP1.csv')
+mpp2_dmrs <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP2.csv')
+mpp_dmrs <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP.csv')
+imrs <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/IMS/IMS_annotated.csv')
+wsh <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/filtered_qFDRP_GSM1274424/filtered_qFDRP_GSM1274424.csv')
+non_cut <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/non_cut_amplicons.csv')
+always_meth <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/meth_unmeth/always_meth_filtered.csv')
+always_unmeth <- read.csv('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/meth_unmeth/always_unmeth_filtered.csv')
 
 all_frames <- list(HSC=hsc_dmrs,
                    MPP1=mpp1_dmrs,
@@ -34,13 +34,19 @@ all_frames <- list(HSC=hsc_dmrs,
                    AlwaysMeth=always_meth,
                    AlwaysUnmeth=always_unmeth)
 all_frames <- lapply(all_frames, function(x){
-  x <- x[x$GCContent<0.5, ]
+  x <- x[x$GCContent<0.6, ]
   if(!('End'%in%colnames(x))){
     x[, 'End'] <- x[, 'Start']+1
   }
   x
 })
-
+for(type in c('HSC', 'MPP1', 'MPP2', 'MPP', 'IMR', 'WSH')){
+  fr <- all_frames[[type]]
+  is_non_na <- !is.na(fr[, 'enhancer_annotation']) | !is.na(fr[, 'promoter'])
+  is_non_na[!is_non_na][sample(1:sum(!is_non_na), round(length(is_non_na)*(sum(is_non_na)*0.5/length(is_non_na))))] <- TRUE
+  fr <- fr[is_non_na, ]
+  all_frames[[type]] <- fr
+}
 final_frame <- data.frame(rbind(all_frames$HSC[1:n_hscs, c('Chromosome', 'Start', 'End')],
                                 all_frames$MPP1[1:n_mpp1, c('Chromosome', 'Start', 'End')],
                                 all_frames$MPP2[1:n_mpp2, c('Chromosome', 'Start', 'End')],
@@ -60,8 +66,10 @@ final_frame <- data.frame(rbind(all_frames$HSC[1:n_hscs, c('Chromosome', 'Start'
                                  paste0(rep('Non_cut', n_non_cut), 1:n_non_cut),
                                  paste0(rep('Always_methylated', n_meth), 1:n_meth),
                                  paste0(rep('Always_unmethylated', n_unmeth), 1:n_unmeth)))
-final_frame[!grepl(' Non_cut', final_frame$Type), 'Start'] <- final_frame[!grepl(' Non_cut', final_frame$Type), 'Start']-100
-final_frame[!grepl(' Non_cut', final_frame$Type), 'End'] <- final_frame[!grepl(' Non_cut', final_frame$Type), 'End']+100
+final_frame[!grepl('Non_cut', final_frame$Type), 'Start'] <- final_frame[!grepl('Non_cut', final_frame$Type), 'Start']-10
+final_frame[!grepl('Non_cut', final_frame$Type), 'End'] <- final_frame[!grepl('Non_cut', final_frame$Type), 'End']+10
+final_frame[grepl('Non_cut', final_frame$Type), 'Start'] <- final_frame[grepl('Non_cut', final_frame$Type), 'Start']+175
+final_frame[grepl('Non_cut', final_frame$Type), 'End'] <- final_frame[grepl('Non_cut', final_frame$Type), 'End']-175
 final_frame_gr <- makeGRangesFromDataFrame(final_frame)
 op <- findOverlaps(final_frame_gr, final_frame_gr)
 queryHits(op)[queryHits(op)!=subjectHits(op)]
@@ -70,6 +78,10 @@ to_write <- data.frame(rep('Region', nrow(final_frame)),
                        paste0(final_frame$Chromosome, ':', final_frame$Start, '-', final_frame$End),
                        final_frame$Type)
 write.csv(to_write, 
-            '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_input/upload.csv',
+            '/users/lvelten/project/Methylome/analysis/selection_pipeline/MB_input/upload.csv',
+          row.names=FALSE,
+          quote=FALSE)
+write.csv(final_frame, 
+          '/users/lvelten/project/Methylome/analysis/selection_pipeline/MB_input/frame_cleartext.csv',
           row.names=FALSE,
           quote=FALSE)
