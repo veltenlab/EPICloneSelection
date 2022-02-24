@@ -2,19 +2,19 @@
 #' This file computes reliable DMRs from and RnBeads output directory. We define reliable as thos
 #' that are consistently methylated/unmethylated per cell type in all pairwise comparison.
 
-.libPaths(c('/users/mscherer/R/',.libPaths()))
+#.libPaths(c('/users/mscherer/R/R-4.1.2',.libPaths()))
 
 library(yaml)
 library(data.table)
 library(RnBeads)
 library(RnBeads.mm10)
 
-report <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211020_differential/'
-output <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/'
-config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
+report <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211020_differential/'
+output <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/'
+config_file <- '/users/lvelten/project/Methylome/src/selection_pipeline/config.yaml'
 config <- yaml.load_file(config_file)
 
-source('/users/mscherer/cluster/project/Methylome/src/selection_pipeline/checkForCutSite.R')
+source('/users/lvelten/project/Methylome/src/selection_pipeline/checkForCutSite.R')
 
 all.comparisons <- list.files(file.path(report,'differential_methylation_data'), full.names=TRUE, pattern = 'diffMethTable_site')
 system(paste0('rm -rf ', output,'/high_*.csv'))

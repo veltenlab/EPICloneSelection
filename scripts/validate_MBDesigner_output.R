@@ -24,6 +24,7 @@ validateMBDesigner <- function(csv,
   pu1.chip$V3 <- as.numeric(pu1.chip$V3)
   pu1.chip <- makeGRangesFromDataFrame(na.omit(pu1.chip), seqnames.field = 'V1', start.field = 'V2', end.field = 'V3', strand.field = 'V6')
   gen.version <- config[['general']][['genome']]
+  variable_genes <- as.character(read.csv(config[['annotations']][['variable_genes']])[, 2])
   if(gen.version=='mm10'){
     suppressPackageStartupMessages(library(BSgenome.Mmusculus.UCSC.mm10))
     genome <- BSgenome.Mmusculus.UCSC.mm10
@@ -46,6 +47,9 @@ validateMBDesigner <- function(csv,
   dat$GCContent <- NA
   dat$CpGCount <- NA
   dat$HhaCutsites <- NA
+  dat$ClosestVariableGene <- NA
+  dat$ClosestVariableGeneDistance <- NA
+  dat$AgingDMC <- NA
   dat[hema.motifs$TF] <- NA
   tfs.files.all <- list.files(config[['annotations']][['tf_chip']],full.names=TRUE)
   tfs.all <- gsub('.bed', '', list.files(config[['annotations']][['tf_chip']]))
@@ -54,12 +58,19 @@ validateMBDesigner <- function(csv,
   }
   cpgs <- makeGRangesFromDataFrame(rnb.annotation2data.frame(rnb.get.annotation("CpG", assembly = gen.version)))
   genes <- unlist(rnb.get.annotation('genes',assembly = gen.version))
+  names(genes) <- gsub('chr[[:alnum:]][[:punct:]]', '', names(genes))
+  names(genes) <- gsub('chr[[:alnum:]][[:alnum:]][[:punct:]]', '', names(genes))
   promoters <- unlist(rnb.get.annotation('promoters',assembly = gen.version))
   reg.elements <- read.csv(config[['annotations']][['enhancer_catalog']])
   row.names(reg.elements) <- paste0(reg.elements$Chr,'_',reg.elements$Start)
   reg.elements.tab <- read.table(config[['annotations']][['enhancer_catalog_bed']],sep='\t')
   reg.elements.gr <- makeGRangesFromDataFrame(reg.elements.tab,seqnames.field = 'V1', start.field = 'V2', end.field = 'V3', strand.field = 'V4')                    
   values(reg.elements.gr) <- reg.elements.tab$V5
+  aging_dmcs <- read.csv(config[['annotations']][['aging_dmcs']])
+  aging_dmcs <- makeGRangesFromDataFrame(aging_dmcs, seqnames.field = 'Chromosome',
+                                         start.field='Start',
+                                         end.field='Start',
+                                         keep.extra.columns=TRUE)
   while(i < num){
     chr <- as.character(dat[i,"chr"])
     seq <- genome[[chr]]
@@ -80,6 +91,13 @@ validateMBDesigner <- function(csv,
       dat$gene[i] <- paste(values(genes)$symbol[subjectHits(op)],collapse=',')
     }else{
       dat$gene[i] <- NA
+    }
+    closest_variable_gene <- distance(region.gr, genes[variable_genes])
+    dat$ClosestVariableGene[i] <- paste(values(genes[variable_genes])$symbol[which.min(closest_variable_gene)],collapse=',')
+    dat$ClosestVariableGeneDistance[i] <- min(closest_variable_gene, na.rm = TRUE)
+    op <- findOverlaps(region.gr, aging_dmcs)
+    if(length(op)>0){
+      dat$AgingDMC[i] <- values(aging_dmcs)$mean.diff[subjectHits(op)]
     }
     op <- findOverlaps(region.gr,promoters)
     if(length(op)>0){
@@ -132,7 +150,8 @@ validateMBDesigner <- function(csv,
 }
 
 # What happens with line 499, Always_methylated19
-res <- validateMBDesigner('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/4135-design-summary.csv')
+mb_id <- '4176'
+res <- validateMBDesigner(paste0('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/', mb_id, '-design-summary.csv'))
 input <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_input/frame_cleartext.csv')
 output.gr <- makeGRangesFromDataFrame(res, seqnames.field = 'chr', start.field = 'amplicon_start', end.field = 'amplicon_end')
 input.gr <- makeGRangesFromDataFrame(input)
@@ -141,4 +160,43 @@ if(any(!(1:nrow(res)%in%subjectHits(op)))){
   print('Something is wrong')
 }
 res <- data.frame(res[subjectHits(op), ], input[queryHits(op), ])
-write.csv(res, '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/4135-design-summary_annotated.csv')
+write.csv(res, paste0('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/', mb_id, '-design-summary_annotated.csv'))
+
+library(ggsci)
+plot_theme <- theme(panel.background = element_blank(),
+                    panel.grid=element_blank(),
+                    text=element_text(color='black',size=6),
+                    axis.text=element_text(color='black',size=5),
+                    axis.ticks=element_blank(),
+                    strip.background = element_blank(),
+                    legend.key=element_rect(color=NA, fill=NA),
+                    #axis.text.x=element_text(angle=45, hjust=1, vjust = 1),
+                    axis.text.x=element_blank(),
+                    axis.title.x=element_blank(),
+                    axis.ticks.x=element_blank(),
+                    legend.title=element_blank(),
+                    panel.spacing = unit(.1, "lines"))
+plot_base <- data.frame(Type=gsub('[[:digit:]]', '', res$Type),
+                      AgingDMC=ifelse(is.na(res$AgingDMC), 'NoDMC', 'DMC'),
+                      Enhancer=ifelse(is.na(res$enhancer_annotation), 'NoEnhancer', 'Enhancers'))
+to_plot <- c()
+for(ty in unique(plot_base$Type)){
+  to_plot <- rbind(to_plot, data.frame(plyr::count(plot_base[plot_base$Type%in%ty, 'AgingDMC']), Type=ty))
+}
+plot <- ggplot(to_plot, aes(x="", y=freq, fill=x))+geom_bar(stat="identity", width=1, color="white")+
+  coord_polar("y", start=0)+geom_text(aes(label=as.character(freq)), size=2)+plot_theme+scale_fill_tron()+ylab("")+xlab("")+facet_wrap(Type~., ncol=3)
+ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicons_aging.pdf',
+       height=100,
+       width=100,
+       unit='mm')
+
+to_plot <- c()
+for(ty in unique(plot_base$Type)){
+  to_plot <- rbind(to_plot, data.frame(plyr::count(plot_base[plot_base$Type%in%ty, 'Enhancer']), Type=ty))
+}
+plot <- ggplot(to_plot, aes(x="", y=freq, fill=x))+geom_bar(stat="identity", width=1, color="white")+
+  coord_polar("y", start=0)+geom_text(aes(label=as.character(freq)), size=2)+plot_theme+scale_fill_tron()+ylab("")+xlab("")+facet_wrap(Type~., ncol=3)
+ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicons_enhancer.pdf',
+       height=100,
+       width=100,
+       unit='mm')

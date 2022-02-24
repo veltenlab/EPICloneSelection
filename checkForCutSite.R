@@ -64,6 +64,7 @@ checkForCutSite <- function(dat,
   dat$GCContent <- NA
   dat$ClosestVariableGene <- NA
   dat$ClosestVariableGeneDistance <- NA
+  dat$AgingDMC <- NA
   dat[hema.motifs$TF] <- NA
   tfs.files.all <- list.files(config[['annotations']][['tf_chip']],full.names=TRUE)
   tfs.all <- gsub('.bed', '', list.files(config[['annotations']][['tf_chip']]))
@@ -80,6 +81,11 @@ checkForCutSite <- function(dat,
   reg.elements.tab <- read.table(config[['annotations']][['enhancer_catalog_bed']],sep='\t')
   reg.elements.gr <- makeGRangesFromDataFrame(reg.elements.tab,seqnames.field = 'V1', start.field = 'V2', end.field = 'V3', strand.field = 'V4')                    
   values(reg.elements.gr) <- reg.elements.tab$V5
+  aging_dmcs <- read.csv(config[['annotations']][['aging_dmcs']])
+  aging_dmcs <- makeGRangesFromDataFrame(aging_dmcs, seqnames.field = 'Chromosome',
+                                         start.field='Start',
+                                         end.field='Start',
+                                         keep.extra.columns=TRUE)
   while(num<number && i<nrow(dat)){
     chr <- as.character(dat[i,"Chromosome"])
     start <- as.numeric(as.character(dat[i,"Start"]))
@@ -104,12 +110,16 @@ checkForCutSite <- function(dat,
         region.gr <- GRanges(paste0(chr,':',region.start,'-',region.end))
         op <- findOverlaps(region.gr,genes)
         closest_variable_gene <- distance(region.gr, genes[variable_genes])
-        dat$ClosestVariableGene[i] <- paste(values(genes)$symbol[which.min(closest_variable_gene)],collapse=',')
+        dat$ClosestVariableGene[i] <- paste(values(genes[variable_genes])$symbol[which.min(closest_variable_gene)],collapse=',')
         dat$ClosestVariableGeneDistance[i] <- min(closest_variable_gene, na.rm = TRUE)
         if(length(op)>0){
           dat$gene[i] <- paste(values(genes)$symbol[subjectHits(op)],collapse=',')
         }else{
           dat$gene[i] <- NA
+        }
+        op <- findOverlaps(region.gr, aging_dmcs)
+        if(length(op)>0){
+          dat$AgingDMC[i] <- values(aging_dmcs)$mean.diff[subjectHits(op)]
         }
         op <- findOverlaps(region.gr,promoters)
         if(length(op)>0){

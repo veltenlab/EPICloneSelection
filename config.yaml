@@ -46,4 +46,4 @@ annotations:
  pu1_chip: /users/mscherer/cluster/project/Methylome/data/external/ZhangChIP/GSM774291_FLDN1PU.1I_mm10.bed
  hema_tf_motifs: /users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/Robert_max_TFBSs.csv
  variable_genes: /users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/misc/variable_genes_Nestorowa2015.csv
-
+ aging_dmcs: /users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/aging/selected_dmrs.csv

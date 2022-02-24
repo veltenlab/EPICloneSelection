@@ -2,23 +2,46 @@
 #' With this script, we filter for potentially interesting variable regions and annotate them
 #' according to further epigenomic annotations such as TFBSs or ChIP-seq data
 
-.libPaths(c('/users/mscherer/conda/envs/rnbeads/lib/R/library/', .libPaths()))
+#.libPaths(c('/users/mscherer/R/R-4.1.2/', .libPaths()))
 library(yaml)
 library(data.table)
 library(RnBeads)
 library(RnBeads.mm10)
 
-res_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH_subsampled/GSM1274424/'
+res_folder <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH_subsampled/GSM1274424/'
 sample_name <- 'qFDRP_GSM1274424'
-out_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/'
-all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_HSCs.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP1.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP2.csv')
-config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
+out_folder <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/'
+all_dmrs <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_HSCs.csv',
+              '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP.csv',
+              '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP1.csv',
+              '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP2.csv')
+imcs <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/IMS/IMS_annotated_all.csv')
+pdrs <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/PDR_GSM1274424.csv',
+          '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/PDR_GSM1274425.csv',
+          '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/PDR_GSM1274426.csv')
+pdr_annotations <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/annotation.RData',
+                     '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/annotation.RData',
+                     '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/annotation.RData')
+load(pdr_annotations[1])
+for(i in 2:length(pdr_annotations)){
+  last_anno <- annotation
+  load(pdr_annotations[i])
+  op <- findOverlaps(last_anno, annotation)
+  last_anno <- last_anno[queryHits(op)]
+}
+all_pdr <- matrix(nrow=length(last_anno), ncol=length(pdrs))
+for(i in 1:length(pdr_annotations)){
+  load(pdr_annotations[i])
+  op <- findOverlaps(last_anno, annotation)
+  pdr <- read.csv(pdrs[i])
+  all_pdr[queryHits(op), i] <- pdr[subjectHits(op), ]
+}
+pdr_annotation <- last_anno
+# Include high PDR here
+config_file <- '/users/lvelten/project/Methylome/src/selection_pipeline/config.yaml'
 config <- yaml.load_file(config_file)
 
-source('/users/mscherer/cluster/project/Methylome/src/selection_pipeline/checkForCutSite.R')
+source('/users/lvelten/project/Methylome/src/selection_pipeline/checkForCutSite.R')
 
 qfdrp <- read.csv(paste0(res_folder, sample_name, '.csv'))
 load(paste0(res_folder, 'annotation.RData'))
@@ -34,14 +57,24 @@ dmrs_gr <- resize(dmrs_gr, width = 500, fix = 'center')
 op <- findOverlaps(annotation,dmrs_gr)
 qfdrp <- qfdrp[-queryHits(op)]
 annotation <- annotation[-queryHits(op)]
+imcs <- read.csv(imcs)
+imcs_gr <- makeGRangesFromDataFrame(imcs, end='Start')
+imcs_gr <- resize(imcs_gr, width = 500, fix = 'center')
+op <- findOverlaps(annotation, imcs_gr)
+qfdrp <- qfdrp[-queryHits(op)]
+annotation <- annotation[-queryHits(op)]
+op <- findOverlaps(annotation, pdr_annotation)
+qfdrp <- qfdrp[queryHits(op)]
+pdrs <- rowMeans(all_pdr[subjectHits(op), ])
 qfdrp <- data.frame(Chromosome=seqnames(annotation),
                     Start=start(annotation),
                     End=end(annotation),
-                    qFDRP=qfdrp)
-res <- checkForCutSite(qfdrp,
+                    qFDRP=qfdrp,
+                    PDR=pdrs)
+res <- checkForCutSite(na.omit(qfdrp),
                        number=230,
                        config=config_file, 
-                       sort.col='qFDRP')
+                       sort.col=c('qFDRP', 'PDR'))
 out_folder <- file.path(out_folder, paste0('filtered_', sample_name))
 if(!dir.exists(out_folder)){
   system(paste('mkdir', out_folder))
