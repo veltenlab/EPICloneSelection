@@ -7,8 +7,8 @@ n_hscs <- 150
 n_mpp1 <- 35
 n_mpp2 <- 35
 n_mpp <- 50
-n_imrs <- 260
-n_wsh <- 80
+n_imrs <- 265
+n_wsh <- 75
 n_non_cut <- 50
 n_meth <- 20
 n_unmeth <- 20
@@ -43,7 +43,7 @@ all_frames <- lapply(all_frames, function(x){
 for(type in c('HSC', 'MPP1', 'MPP2', 'MPP', 'IMR', 'WSH')){
   fr <- all_frames[[type]]
   is_non_na <- !is.na(fr[, 'enhancer_annotation']) | !is.na(fr[, 'promoter']) | !is.na(fr[, 'AgingDMC'])
-  is_non_na[!is_non_na][sample(1:sum(!is_non_na), round(length(is_non_na)*(sum(is_non_na)*0.5/length(is_non_na))))] <- TRUE
+  is_non_na[!is_non_na][sample(1:sum(!is_non_na), round(length(is_non_na)*(sum(is_non_na)*0.25/length(is_non_na))))] <- TRUE
   fr <- fr[is_non_na, ]
   all_frames[[type]] <- fr
 }

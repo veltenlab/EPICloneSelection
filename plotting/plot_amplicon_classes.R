@@ -1,6 +1,6 @@
 library(ggplot2)
 library(ggsci)
-dat <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/4135-design-summary_annotated.csv')
+dat <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/4247-design-summary_annotated.csv')
 types <- gsub('[0-9]', '', dat$Type)
 types[grep('high', types)] <- 'DMC'
 types[types%in%'IMR'] <- 'IMC'
