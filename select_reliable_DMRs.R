@@ -9,12 +9,12 @@ library(data.table)
 library(RnBeads)
 library(RnBeads.mm10)
 
-report <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211020_differential/'
-output <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/'
-config_file <- '/users/lvelten/project/Methylome/src/selection_pipeline/config.yaml'
+report <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211020_differential/'
+output <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/'
+config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
 config <- yaml.load_file(config_file)
 
-source('/users/lvelten/project/Methylome/src/selection_pipeline/checkForCutSite.R')
+source('/users/mscherer/cluster/project/Methylome/src/selection_pipeline/checkForCutSite.R')
 
 all.comparisons <- list.files(file.path(report,'differential_methylation_data'), full.names=TRUE, pattern = 'diffMethTable_site')
 system(paste0('rm -rf ', output,'/high_*.csv'))
@@ -75,7 +75,8 @@ dmrs.all <- lapply(all.files, function(dmr){
     dmr <- checkForCutSite(dmr,
                     number=nrow(dmr),
                     config=config_file,
-                    sort.col=c('mean.diff', 'mean.diff.1', 'mean.diff.2'))
+                    sort.col=c('mean.diff', 'mean.diff.1', 'mean.diff.2'),
+                    use.extended=TRUE)
     print(nrow(dmr))
     tfbs_sites <- colnames(dmr)[(which(colnames(dmr)=='GCContent')+1):ncol(dmr)]
     tfbs_frame <- dmr[, tfbs_sites]
@@ -84,7 +85,7 @@ dmrs.all <- lapply(all.files, function(dmr){
     dmr <- dmr[!all_nas, ]
 })
 all.names <- list.files(output, pattern = 'high')
-all.names <- gsub('high_','high_filtered_',all.names)
+all.names <- gsub('high_','high_filtered_extended_',all.names)
 for(i in 1:length(dmrs.all)){
     write.csv(dmrs.all[[i]],file.path(output,all.names[i]))
 }
