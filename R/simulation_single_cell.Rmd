@@ -1,0 +1,158 @@
+---
+title: "Simulation_test"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = F, error = F)
+```
+
+# Simulation test
+
+```{r, required packages}
+wd <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/simulation/'
+require(glmnet)
+require(pheatmap)
+require(ggplot2)
+require(parallel)
+require(tsne)
+library(gplots)
+library(RnBeads)
+```
+
+
+```{r, Set parameters}
+simulation.number<-10
+DROP <- 0.2
+FPR <- 0.1
+ALPHA <- 0.9
+s.adjusted <- exp(-4)
+```
+
+
+```{r, read data}
+rnb.set <- load.rnb.set('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211004/cluster_run/preprocessing_RnBSet/')
+mb_id <- 4318
+metadata <- read.csv(paste0("/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/", mb_id, "-design-summary_annotated.csv"))
+metadata$Name <- metadata$Type
+metadata$Type <- gsub('[[:digit:]]', '', metadata$Type)
+#cpgs.gr <- GRanges(metadata[grepl('high', metadata[,3]), 2])
+cpgs.gr <- makeGRangesFromDataFrame(metadata,
+  seqnames.field = 'chr',
+  start.field = 'insert_start',
+  end.field='insert_end')
+cpgs.gr <- resize(cpgs.gr, width=50, fix='end')
+anno.gr <- makeGRangesFromDataFrame(annotation(rnb.set))
+op <- findOverlaps(cpgs.gr, anno.gr, select='first')
+data <- meth(rnb.set)[op[!is.na(op)], ]
+row.names(data) <- metadata$AmpID[!is.na(op)]
+metadata <- metadata[!is.na(op), ]
+data <- data[!grepl('Non_cut', metadata$Type), ]
+metadata <- metadata[!grepl('Non_cut', metadata$Type), ]
+pheno <- pheno(rnb.set)
+```
+
+## Simulation of single-cell data
+
+```{r, simulate the data}
+
+#Define formula to simulate the data
+mean.by.celltype <- sapply(unique(pheno$cell_type), function(ct) apply(data[,pheno$cell_type == ct],1,mean))
+
+simulateCell <- function(celltype, dropout, fpr) {
+  
+  #throw a dice to determine if in this cell, the alleles are methylated
+  cpg.methylated.allele1 <- runif(nrow(mean.by.celltype)) < mean.by.celltype[,celltype]
+  cpg.methylated.allele2 <- runif(nrow(mean.by.celltype)) < mean.by.celltype[,celltype]
+  
+  #depending on the outcome, throw another coin to determine if the alleles are observed (or not)
+  rnum <- runif(length(cpg.methylated.allele1))
+  observed1 <- ifelse(cpg.methylated.allele1, 
+                      yes = rnum > dropout,
+                      no = rnum < FPR 
+  )
+  
+  rnum <- runif(length(cpg.methylated.allele2))
+  observed2 <- ifelse(cpg.methylated.allele2, 
+                      yes = rnum > dropout,
+                      no = rnum < FPR 
+  )
+  
+  observed <- observed1 | observed2
+  
+  return(observed)
+  
+}
+
+#simulate 100 cells of each cell type
+simulatedCells <- mclapply(rep(unique(pheno$cell_type), each =100), simulateCell, dropout = DROP, fpr= FPR, mc.cores = 6)
+simulatedCells <- do.call(cbind, simulatedCells)
+rownames(simulatedCells) <- rownames(mean.by.celltype)
+colnames(simulatedCells) <- paste(rep(unique(metadata$Group), each =100),1:ncol(simulatedCells), sep="_")
+
+simulatedCells.numeric <- apply(simulatedCells, 2, as.numeric)    
+dimnames(simulatedCells.numeric) <- dimnames(simulatedCells)
+write.table(simulatedCells.numeric, file.path(wd, paste("Simulated.data.v", simulation.number, "drop", DROP, "fpr", FPR, "txt", sep=".")), col.names=TRUE, row.names=TRUE, quote=FALSE)
+save(simulatedCells.numeric, file=file.path(wd, paste("Simulated.data.v", simulation.number, "drop", DROP, "fpr", FPR, "Rdata", sep=".")))
+```
+
+### t-SNE & heatmap on all simulated data
+
+```{r charts1, fig.width=5,fig.height=4}
+
+pca <- prcomp(t(simulatedCells.numeric))
+#pca.binary <- logisticPCA(simulatedCells, k =25, quiet = F, partial_decomp = T)
+tsne <- tsne(pca$x[,1:10])
+labels <- data.frame(row.names = colnames(simulatedCells), ct = rep(unique(pheno$cell_type), each =100), tsne)
+qplot(x = X1, y = X2, data= labels, color = ct) +theme_bw()
+```
+
+
+```{r charts2, fig.width=7,fig.height=7}
+simulatedCells.numeric <- apply(simulatedCells, 2, as.numeric)    
+dimnames(simulatedCells.numeric) <- dimnames(simulatedCells)
+pheatmap(simulatedCells.numeric, annotation_col = labels, clustering_distance_rows = "manhattan",clustering_distance_cols = "manhattan")
+```
+
+
+```{r charts2, fig.width=7,fig.height=7}
+colors_amplicons <- list(Type=c("IMR"="#e5c494",
+                      "HSC_high"="#fc8d62",
+                      "MPP_high"="#ffd92f",
+                      "Always_unmethylated"="#a6d854",
+                      "Always_methylated"="#66c2a5",
+                      "MPPI_high"="#e78ac3",
+                      "MPPII_high"="#e700ad",
+                      "WSH"="#b3b3b3"))
+an <- pheno[, 'cell_type', drop=FALSE]
+row.names(an) <- samples(rnb.set)
+an_row <- metadata[, 'Type', drop=FALSE]
+row.names(an_row) <- metadata$AmpID
+pheatmap(as.data.frame(data),
+         annotation_col = an,
+         annotation_row = an_row,
+         clustering_distance_rows = "manhattan",
+         clustering_distance_cols = "manhattan",
+         annotation_colors = colors_amplicons)
+```
+```{r}
+colors_amplicons <- list(Type=c("IMR"="#e5c494",
+                      "HSC_high"="#fc8d62",
+                      "MPP_high"="#ffd92f",
+                      "Always_unmethylated"="#a6d854",
+                      "Always_methylated"="#66c2a5",
+                      "MPPI_high"="#e78ac3",
+                      "MPPII_high"="#e700ad",
+                      "WSH"="#b3b3b3"))
+data <- data[grepl('_high', an_row$Type), ]
+an <- pheno[, 'cell_type', drop=FALSE]
+row.names(an) <- samples(rnb.set)
+an_row <- metadata[, 'Type', drop=FALSE]
+row.names(an_row) <- metadata$AmpID
+pheatmap(as.data.frame(data),
+         annotation_col = an,
+         annotation_row = an_row,
+         clustering_distance_rows = "manhattan",
+         clustering_distance_cols = "manhattan",
+         annotation_colors = colors_amplicons)
+```

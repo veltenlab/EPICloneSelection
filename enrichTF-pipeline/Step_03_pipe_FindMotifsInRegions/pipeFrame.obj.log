@@ -1,0 +1,46 @@
+Step Name:pipe_FindMotifsInRegions
+All Parameters for This Step:
+|Input:
+|    inputRegionBed:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_01_pipe_GenBackground/cluster_3.allregion.bed"
+|Output:
+|    outputRegionMotifBed:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_03_pipe_FindMotifsInRegions/cluster_3.region.motif.bed"
+|    outputMotifBed:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_03_pipe_FindMotifsInRegions/cluster_3.motif.bed"
+|Other Parameters:
+|    motifRc:
+|        "integrate"
+|    pwmObj:
+|        An object of PWMatrixList
+|    genome:
+|        "hg19"
+|    threads:
+|        2
+__________________________________________
+Begin to check if it is finished...
+2022-03-23 12:09:22
+New step. Start processing data: 
+Step Name:pipe_FindMotifsInRegions
+All Parameters for This Step:
+|Input:
+|    inputRegionBed:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_01_pipe_GenBackground/cluster_3.allregion.bed"
+|Output:
+|    outputRegionMotifBed:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_03_pipe_FindMotifsInRegions/cluster_3.region.motif.bed"
+|    outputMotifBed:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_03_pipe_FindMotifsInRegions/cluster_3.motif.bed"
+|Other Parameters:
+|    motifRc:
+|        "integrate"
+|    pwmObj:
+|        An object of PWMatrixList
+|    genome:
+|        "hg19"
+|    threads:
+|        2
+__________________________________________
+Begin to check if it is finished...
+2022-03-23 12:25:40
+New step. Start processing data: 

@@ -10,16 +10,16 @@ library(RnBeads.mm10)
 
 rnb_set_path <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/rnb_report_20211004_reduced/cluster_run/preprocessing_RnBSet/'
 out_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/IMS/'
-all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_HSC.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP1.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_MPP2.csv')
-pdrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR_3/PDR_GSM1274424.csv',
-          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR_3/PDR_GSM1274425.csv',
-          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR_3/PDR_GSM1274426.csv')
-pdr_annotations <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/annotation.RData',
-                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/annotation.RData',
-                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/annotation.RData')
+all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_HSC.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_MPP.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_MPP1.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_MPP2.csv')
+pdrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR_2/PDR_GSM1274424.csv',
+          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR_2/PDR_GSM1274425.csv',
+          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR_2/PDR_GSM1274426.csv')
+pdr_annotations <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR_2/annotation.RData',
+                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR_2/annotation.RData',
+                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR_2/annotation.RData')
 config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
 config <- yaml.load_file(config_file)
 load(pdr_annotations[1])
@@ -79,7 +79,8 @@ res <- checkForCutSite(na.omit(meth_data_fr),
                        number=750,
                        config=config_file, 
                        sort.col='PDR',
-                       decreasing=FALSE)
+                       decreasing=FALSE,
+                       use.extended=TRUE)
 if(!dir.exists(out_folder)){
   system(paste('mkdir', out_folder))
 }

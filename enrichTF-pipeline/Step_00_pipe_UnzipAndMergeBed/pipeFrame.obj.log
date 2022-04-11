@@ -1,0 +1,32 @@
+Step Name:pipe_UnzipAndMergeBed
+All Parameters for This Step:
+|Input:
+|    bedInput:
+|        "/users/lvelten/project/Methylome/analysis/scTAMseq_manuscript/Supplement/cluster_3.bed"
+|Output:
+|    bedOutput:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_00_pipe_UnzipAndMergeBed/cluster_3.bed"
+|Other Parameters:
+__________________________________________
+Begin to check if it is finished...
+2022-03-23 12:07:55
+New step. Start processing data: 
+processing file:
+source:/users/lvelten/project/Methylome/analysis/scTAMseq_manuscript/Supplement/cluster_3.bed
+destination:/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_00_pipe_UnzipAndMergeBed/cluster_3.bed
+2022-03-23 12:07:55
+processing finished
+All results have been saved.
+Step Name:pipe_UnzipAndMergeBed
+All Parameters for This Step:
+|Input:
+|    bedInput:
+|        "/users/lvelten/project/Methylome/analysis/scTAMseq_manuscript/Supplement/cluster_3.bed"
+|Output:
+|    bedOutput:
+|        "/users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_00_pipe_UnzipAndMergeBed/cluster_3.bed"
+|Other Parameters:
+__________________________________________
+Begin to check if it is finished...
+The step:`pipe_UnzipAndMergeBed` was finished. Nothing to do.
+If you need to redo or rerun this step,please call 'clearStepCache(YourStepObject)'or remove file: /users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_00_pipe_UnzipAndMergeBed/pipeFrame.obj.808ee3d6.rds

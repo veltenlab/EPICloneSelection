@@ -8,20 +8,22 @@ library(data.table)
 library(RnBeads)
 library(RnBeads.mm10)
 
-res_folder <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH_subsampled/GSM1274424/'
-sample_name <- 'qFDRP_GSM1274424'
-out_folder <- '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/'
-all_dmrs <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_HSCs.csv',
-              '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP.csv',
-              '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP1.csv',
-              '/users/lvelten/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP2.csv')
-imcs <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/IMS/IMS_annotated_all.csv')
-pdrs <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/PDR_GSM1274424.csv',
-          '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/PDR_GSM1274425.csv',
-          '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/PDR_GSM1274426.csv')
-pdr_annotations <- c('/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/annotation.RData',
-                     '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/annotation.RData',
-                     '/users/lvelten/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/annotation.RData')
+sample_names <- c('GSM1274424',
+                  'GSM1274425',
+                  'GSM1274426')
+res_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH_subsampled/'
+out_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/'
+all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_HSCs.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP1.csv',
+              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP2.csv')
+imcs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/IMS/IMS_annotated_all.csv')
+pdrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/PDR_GSM1274424.csv',
+          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/PDR_GSM1274425.csv',
+          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/PDR_GSM1274426.csv')
+pdr_annotations <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/annotation.RData',
+                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/annotation.RData',
+                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/annotation.RData')
 load(pdr_annotations[1])
 for(i in 2:length(pdr_annotations)){
   last_anno <- annotation
@@ -38,15 +40,20 @@ for(i in 1:length(pdr_annotations)){
 }
 pdr_annotation <- last_anno
 # Include high PDR here
-config_file <- '/users/lvelten/project/Methylome/src/selection_pipeline/config.yaml'
+config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
 config <- yaml.load_file(config_file)
 
-source('/users/lvelten/project/Methylome/src/selection_pipeline/checkForCutSite.R')
+source('/users/mscherer/cluster/project/Methylome/src/selection_pipeline/checkForCutSite.R')
 
-qfdrp <- read.csv(paste0(res_folder, sample_name, '.csv'))
-load(paste0(res_folder, 'annotation.RData'))
-nas <- is.na(qfdrp$x)
-qfdrp <- qfdrp[!nas, ]
+qfdrps <- lapply(sample_names, function(x){
+  read.csv(paste0(res_folder, x, '/qFDRP_' , x, '.csv'))$x
+ })
+qfdrps <- data.frame(do.call(cbind, qfdrps))
+colnames(qfdrps) <- sample_names
+qfdrp <- rowMeans(qfdrps)
+load(paste0(paste0(res_folder, sample_names[1], '/'), 'annotation.RData'))
+nas <- is.na(qfdrp)
+qfdrp <- qfdrp[!nas]
 annotation <- annotation[!nas]
 is_1 <- qfdrp==1
 annotation <- annotation[!is_1]
@@ -72,10 +79,11 @@ qfdrp <- data.frame(Chromosome=seqnames(annotation),
                     qFDRP=qfdrp,
                     PDR=pdrs)
 res <- checkForCutSite(na.omit(qfdrp),
-                       number=230,
+                       number=300,
                        config=config_file, 
-                       sort.col=c('qFDRP', 'PDR'))
-out_folder <- file.path(out_folder, paste0('filtered_', sample_name))
+                       sort.col=c('qFDRP', 'PDR'),
+                       use.extended = TRUE)
+out_folder <- file.path(out_folder, paste0('filtered_qFDRP'))
 if(!dir.exists(out_folder)){
   system(paste('mkdir', out_folder))
 }
@@ -83,4 +91,4 @@ tfbs_sites <- colnames(res)[(which(colnames(res)=='GCContent')+1):ncol(res)]
 tfbs_frame <- res[, tfbs_sites]
 all_nas <- apply(tfbs_frame, 1, function(x)all(is.na(x)))
 res <- res[!all_nas, ]
-write.csv(res, paste0(out_folder, '/filtered_', sample_name, '.csv'))
+write.csv(res, paste0(out_folder, '/filtered_qFDRP.csv'))

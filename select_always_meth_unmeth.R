@@ -66,9 +66,19 @@ dmrs <- lapply(all.comparisons,function(comp){
 source('/users/mscherer/cluster/project/Methylome/src/selection_pipeline/checkForCutSite.R')
 
 always_meth <- list.files(output,pattern='always_meth.csv', full.names=TRUE)
-always_meth <- checkForCutSite(read.csv(always_meth), config=config_file, number=75, sort.col='random', decreasing = FALSE)
+always_meth <- checkForCutSite(read.csv(always_meth),
+                               config=config_file,
+                               number=75,
+                               sort.col='random',
+                               decreasing = FALSE,
+                               use.extended = TRUE)
 write.csv(always_meth, file.path(output, 'always_meth_filtered.csv'))
 always_unmeth <- list.files(output,pattern='always_unmeth.csv', full.names=TRUE)
-always_unmeth <- checkForCutSite(read.csv(always_unmeth), config=config_file, number=75, sort.col='random', decreasing = FALSE)
+always_unmeth <- checkForCutSite(read.csv(always_unmeth),
+                                 config=config_file,
+                                 number=75,
+                                 sort.col='random',
+                                 decreasing = FALSE,
+                                 use.extended = TRUE)
 write.csv(always_unmeth, file.path(output, 'always_unmeth_filtered.csv'))
 
