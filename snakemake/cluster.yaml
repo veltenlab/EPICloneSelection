@@ -63,3 +63,26 @@ merge:
   walltime: 15:00:00
   virtual_memory: 20
 
+compute_pdr:
+  error: log/pdr.err
+  output: log/pdr.out
+  queue: long-sl7
+  walltime: 720:00:00
+  virtual_memory: 92
+  pe: smp 6
+
+compute_imcs:
+  error: log/imcs.err
+  output: log/imcs.out
+  queue: short-sl7
+  walltime: 6:00:00
+  virtual_memory: 40
+
+compute_qfdrp:
+  error: log/imcs.err
+  output: log/imcs.out
+  queue: short-sl7
+  walltime: 6:00:00
+  virtual_memory: 40
+
+
