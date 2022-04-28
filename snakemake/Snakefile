@@ -13,10 +13,16 @@ rule all:
         expand("../data/external/Cabezas/raw/{sra}/trimmed/{sra}_1_val_1.fq",sra=sras),
         expand("../data/external/Cabezas/raw/{sra}/mapped/{sra}.bam/{sra}_1_bismark_bt2_pe.bam",sra=sras),
         expand("../data/external/Cabezas/raw/{sample}/merged/merged.bam",sample=samples),
+        expand("../data/external/Cabezas/raw/{sample}/merged/merged_sorted.bam",sample=samples),
         expand("../data/external/Cabezas/raw/{sample}/extract/",sample=samples),
-        expand("../data/external/Cabezas/raw/{sample}/merged/merged.bam.bai",sample=samples),
-        expand("../data/external/Cabezas/raw/{sample}/extract/",sample=samples),
-        expand("../data/external/Cabezas/raw/rnbeads/report/",sample=samples),
+        "../data/external/Cabezas/raw/rnbeads/report/",
+	    "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
+	    expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples),
+	    "../data/external/Cabezas/IMCs/",
+	    expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
+        "../data/external/Cabezas/raw/meth_unmeth/",
+        "../data/external/Cabezas/raw/uncut/",
+        "../data/external/Cabezas/raw/final_panel/"
 
 rule download:
     output:
@@ -28,12 +34,14 @@ rule download:
         max_size = "50G"
     log:
         "../data/external/Cabezas/raw/{sra}/fastq/{sra}.log"
-    run:
-        print("Start " + params.s)
-        sra_download = "prefetch " + params.s + " --output-directory " + output.folder + " --max-size " + params.max_size
-        proc = subprocess.run(sra_download,shell=True)
-        dump_command = "fastq-dump --split-3 " + output.folder + "/" + params.s + "/" + params.s + ".sra"+" -O " + output.folder
-        proc = subprocess.run(dump_command,shell=True)
+    conda:
+        "sra.yml"
+    shell:
+        "echo Start {params.s} ; " 
+        "prefetch {params.s} --output-directory {output.folder} --max-size {params.max_size} ; "
+        "fastq-dump --split-3 {output.folder}/{params.s}/{params.s}.sra -O {output.folder} ; "
+        "rm -rf {output.folder}/{params.s}/{params.s}.sra ; "
+        "2> {log}"
 
 rule trim:
     input:
@@ -50,13 +58,14 @@ rule trim:
     shell:
         "trim_galore --nextera --paired {input.first} {input.second} -o {output} ; "
         "rm -rf {input.first}; rm -rf {input.second} ; "
+        "rm -rf {output.folder}*_1_val_1_val_1.fq; rm -rf {output.folder}*_2_val_2_val_2.fq ; "
         "2> {log}"
 
 rule bismark:
     input:
         ref = "../references/mm10/",
-        first = "../data/external/Cabezas/raw/{sra}/trimmed/{sra}_1_val_1.fq",
-        second = "../data/external/Cabezas/raw/{sra}/trimmed/{sra}_2_val_2.fq"
+        first = expand("../data/external/Cabezas/raw/{sra}/trimmed/{sra}_1_val_1.fq", sra=sras),
+        second = expand("../data/external/Cabezas/raw/{sra}/trimmed/{sra}_2_val_2.fq", sra=sras)
     output:
         "../data/external/Cabezas/raw/{sample}/mapped/{sample}.bam/{sample}_1_bismark_bt2_pe.bam"
     conda:
@@ -75,31 +84,32 @@ rule bismark:
 
 rule merge:
     input:
-        geo_acc = config['sample_map'],
-        folder = "../data/external/Cabezas/raw/"        
+        geo_acc = config['sample_map']
+       # folder = "../data/external/Cabezas/raw/"        
     output:
         merged = "../data/external/Cabezas/raw/{sample}/merged/merged.bam"
     params:
         s = "{sample}",
-        max_size = "50G"
+        max_size = "50G",
+	folder = "../data/external/Cabezas/raw/" 
     log:
         "../data/external/Cabezas/raw/{sample}/fastq/{sample}.log"
     run:
         srrs = sample_map[sample_map['GEO_Accession (exp)']==params.s]['Run']
         all_bams = " "
         for srr in srrs:
-            all_bams = all_bams + input.folder + "/" + srr + "/mapped/" + srr + ".bam/" + srr + "_1_bismark_bt2_pe.bam/" + srr + "_1_val_1_bismark_bt2_pe.bam "
+            all_bams = all_bams + params.folder + "/" + srr + "/mapped/" + srr + ".bam/" + srr + "_1_bismark_bt2_pe.bam/" + srr + "_1_val_1_bismark_bt2_pe.bam "
 
         merge_cmd = "samtools merge " + output.merged + all_bams + " -n"
         proc = subprocess.run(merge_cmd,shell=True)
-        cleanup = "rm -rf " + input.folder + "SRR*"
+        cleanup = "rm -rf " + params.folder + "SRR*"
         proc = subprocess.run(cleanup,shell=True)
 
 rule sort_index:
     input:
         "../data/external/Cabezas/raw/{sample}/merged/merged.bam"
     output:
-        "../data/external/Cabezas/raw/{sample}/merged/merged_sorted.bam.bai"
+        "../data/external/Cabezas/raw/{sample}/merged/merged_sorted.bam"
     conda:
         "/users/lvelten/mscherer/conda/envs/bismark.yml"
     params:
@@ -127,9 +137,9 @@ rule bismark_extract:
 
 rule rnbeads:
     input:
-        "../data/external/Cabezas/raw/{sample}/extract/"
+        expand("../data/external/Cabezas/raw/{sample}/extract/", sample=samples)
     output:
-        "../data/external/Cabezas/raw/rnbeads/"
+        "../data/external/Cabezas/raw/rnbeads/report/"
     conda:
         "rnbeads.yml"
     log:
@@ -137,7 +147,7 @@ rule rnbeads:
     params:
         script = "../RnBeads/script.R"
     shell:
-        "cp -s ../data/external/Cabezas/raw/*/extract/*.cov.gz {output}/data/"
+        "cp -s ../data/external/Cabezas/raw/*/extract/*.cov.gz ../data/external/Cabezas/raw/rnbeads/data/"
         "Rscript {params.script}"
 
 rule select_dmrs:
@@ -150,9 +160,9 @@ rule select_dmrs:
     log:
         "../data/external/Cabezas/raw/DMRs/dmrs.log"
     params:
-        config = "../selection_config.yaml.R"
+        config = "../config.yaml"
     shell:
-        "Rscript select_reliable_DMRs.R --report {input} --output {output} --config {params.config}"
+        "Rscript scripts/select_reliable_DMRs.R --report {input} --output {output} --config {params.config}"
 
 rule compute_pdr:
     input:
@@ -163,8 +173,10 @@ rule compute_pdr:
         "rnbeads.yml"
     log:
         "../data/external/Cabezas/raw/WSH/{sample}/PDR/pdr.log"
+    params:
+	    s = "{sample}"
     shell:
-        "Rscript WSHScripts/scores/PDR/compute_PDR.R PDR_{sample} {output} {input} ../data/external/Cabezas/raw/rnbeads/report/cluster_run/preprocessing_RnBSet/ 6"
+        "Rscript WSHScripts/scores/PDR/compute_PDR.R PDR_{params.s} {output} {input} ../data/external/Cabezas/raw/rnbeads/report/cluster_run/preprocessing_RnBSet/ 6"
 
 rule compute_imcs:
     input:
@@ -187,6 +199,52 @@ rule compute_qfdrp:
         "rnbeads.yml"
     log:
         "../data/external/Cabezas/raw/WSH/{sample}/qFDRP/pdr.log"
+    params:
+	    s = "{sample}"
     shell:
-        "Rscript WSHScripts/scores/qFDRP/compute_qFDRP.R qFDRP_{sample} {output} {input} ../data/external/Cabezas/raw/rnbeads/report/cluster_run/preprocessing_RnBSet/ 6"
+        "Rscript WSHScripts/scores/qFDRP/compute_qFDRP.R qFDRP_{params.s} {output} {input} ../data/external/Cabezas/raw/rnbeads/report/cluster_run/preprocessing_RnBSet/ 6"
+
+rule generate_always_meth_unmeth:
+    input:
+        "../data/external/Cabezas/raw/rnbeads/report/"
+    output:
+        "../data/external/Cabezas/raw/meth_unmeth/"
+    conda:
+        "rnbeads.yml"
+    log:
+        "../data/external/Cabezas/raw/meth_unmeth/always_meth_unmeth.log"
+    params:
+        config = "../config.yaml"
+    shell:
+        "Rscript scripts/select_always_meth_unmeth.R --report {input} --output {output} --config {params.config}"
+
+rule generate_uncut:
+    input:
+        "../data/external/Cabezas/raw/rnbeads/report/"
+    output:
+        "../data/external/Cabezas/raw/uncut/"
+    conda:
+        "rnbeads.yml"
+    log:
+        "../data/external/Cabezas/raw/uncut/create_uncut.log"
+    params:
+        config = "../config.yaml"
+    shell:
+        "Rscript scripts/construct_non_cut.R --output {output} --config {params.config}"
+
+rule generate_panel:
+    input:
+        wsh = "../data/external/Cabezas/raw/WSH/",
+        imc = "../data/external/Cabezas/raw/IMC/",
+        dmr = "../data/external/Cabezas/raw/DMRs/",
+        noncut = "../data/external/Cabezas/raw/uncut/",
+        always = "../data/external/Cabezas/raw/meth_unmeth/"
+    output:
+        "../data/external/Cabezas/raw/final_panel/"
+    conda:
+        "rnbeads.yml"
+    log:
+        "../data/external/Cabezas/raw/final_panel/create_panel.log"
+    shell:
+        "Rscript scripts/generate_final_panel.R --dmrs {input.dmr} --imc {input.imc} --wsh {input.wsh} --noncut {input.noncut} --always {input.always} --output {output}"
 

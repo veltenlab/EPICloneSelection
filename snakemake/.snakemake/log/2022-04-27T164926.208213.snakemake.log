@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 76 of /nfs/users/lvelten/project/Methylome/src/selection_pipeline/snakemake/Snakefile:
+Missing input files for rule merge:
+../data/external/Cabezas/raw/

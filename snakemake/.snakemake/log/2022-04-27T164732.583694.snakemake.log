@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 55 of /nfs/users/lvelten/project/Methylome/src/selection_pipeline/snakemake/Snakefile:
+Missing input files for rule bismark:
+../references/mm10/

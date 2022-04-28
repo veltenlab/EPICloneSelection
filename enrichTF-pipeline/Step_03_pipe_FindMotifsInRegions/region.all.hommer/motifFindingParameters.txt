@@ -1,1 +1,0 @@
-cmd = /users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_03_pipe_FindMotifsInRegions/homer.input.bed hg19 /users/lvelten/project/Methylome/src/selection_pipeline/enrichTF-pipeline/Step_03_pipe_FindMotifsInRegions/region.all.hommer/ -find /users/lvelten/project/Methylome/src/selection_pipeline/refdir/hg19/motifpwm

@@ -1,0 +1,258 @@
+Building DAG of jobs...
+Provided cluster nodes: 10
+Job counts:
+	count	jobs
+	1	all
+	45	bismark
+	12	bismark_extract
+	1	compute_imcs
+	12	compute_pdr
+	12	compute_qfdrp
+	45	download
+	12	merge
+	1	rnbeads
+	1	select_dmrs
+	12	sort_index
+	45	trim
+	199
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037442/fastq/, ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442_1.fastq, ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442.log
+    jobid: 56
+    wildcards: sra=SRR1037442
+
+Submitted job 56 with external jobid '79408094'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037455/fastq/, ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455_1.fastq, ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455.log
+    jobid: 32
+    wildcards: sra=SRR1037455
+
+Submitted job 32 with external jobid '79408095'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037436/fastq/, ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436_1.fastq, ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436.log
+    jobid: 48
+    wildcards: sra=SRR1037436
+
+Submitted job 48 with external jobid '79408096'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037462/fastq/, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_1.fastq, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462.log
+    jobid: 72
+    wildcards: sra=SRR1037462
+
+Submitted job 72 with external jobid '79408097'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037466/fastq/, ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466_1.fastq, ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466.log
+    jobid: 13
+    wildcards: sra=SRR1037466
+
+Submitted job 13 with external jobid '79408098'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037477/fastq/, ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477_1.fastq, ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477.log
+    jobid: 137
+    wildcards: sra=SRR1037477
+
+Submitted job 137 with external jobid '79408099'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037465/fastq/, ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465_1.fastq, ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465.log
+    jobid: 35
+    wildcards: sra=SRR1037465
+
+Submitted job 35 with external jobid '79408100'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037443/fastq/, ../data/external/Cabezas/raw/SRR1037443/fastq/SRR1037443_1.fastq, ../data/external/Cabezas/raw/SRR1037443/fastq/SRR1037443_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037443/fastq/SRR1037443.log
+    jobid: 63
+    wildcards: sra=SRR1037443
+
+Submitted job 63 with external jobid '79408101'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037444/fastq/, ../data/external/Cabezas/raw/SRR1037444/fastq/SRR1037444_1.fastq, ../data/external/Cabezas/raw/SRR1037444/fastq/SRR1037444_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037444/fastq/SRR1037444.log
+    jobid: 101
+    wildcards: sra=SRR1037444
+
+Submitted job 101 with external jobid '79408102'.
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037461/fastq/, ../data/external/Cabezas/raw/SRR1037461/fastq/SRR1037461_1.fastq, ../data/external/Cabezas/raw/SRR1037461/fastq/SRR1037461_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037461/fastq/SRR1037461.log
+    jobid: 96
+    wildcards: sra=SRR1037461
+
+Submitted job 96 with external jobid '79408103'.
+Error in rule download:
+    jobid: 72
+    output: ../data/external/Cabezas/raw/SRR1037462/fastq/, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_1.fastq, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462.log
+    cluster_jobid: 79408097
+
+Trying to restart job 72.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037462/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037462/fastq/, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_1.fastq, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462.log
+    jobid: 72
+    wildcards: sra=SRR1037462
+
+Submitted job 72 with external jobid '79408113'.
+Error in rule download:
+    jobid: 56
+    output: ../data/external/Cabezas/raw/SRR1037442/fastq/, ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442_1.fastq, ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442.log
+    cluster_jobid: 79408094
+
+Trying to restart job 56.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037442/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037442/fastq/, ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442_1.fastq, ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037442/fastq/SRR1037442.log
+    jobid: 56
+    wildcards: sra=SRR1037442
+
+Error in rule download:
+    jobid: 32
+    output: ../data/external/Cabezas/raw/SRR1037455/fastq/, ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455_1.fastq, ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455.log
+    cluster_jobid: 79408095
+
+Trying to restart job 32.
+Error in rule download:
+    jobid: 48
+    output: ../data/external/Cabezas/raw/SRR1037436/fastq/, ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436_1.fastq, ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436.log
+    cluster_jobid: 79408096
+
+Trying to restart job 48.
+Submitted job 56 with external jobid '79408116'.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037455/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037455/fastq/, ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455_1.fastq, ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037455/fastq/SRR1037455.log
+    jobid: 32
+    wildcards: sra=SRR1037455
+
+Error in rule download:
+    jobid: 13
+    output: ../data/external/Cabezas/raw/SRR1037466/fastq/, ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466_1.fastq, ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466.log
+    cluster_jobid: 79408098
+
+Trying to restart job 13.
+Error in rule download:
+    jobid: 137
+    output: ../data/external/Cabezas/raw/SRR1037477/fastq/, ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477_1.fastq, ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477.log
+    cluster_jobid: 79408099
+
+Trying to restart job 137.
+Submitted job 32 with external jobid '79408117'.
+Error in rule download:
+    jobid: 35
+    output: ../data/external/Cabezas/raw/SRR1037465/fastq/, ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465_1.fastq, ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465.log
+    cluster_jobid: 79408100
+
+Trying to restart job 35.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037436/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037436/fastq/, ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436_1.fastq, ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037436/fastq/SRR1037436.log
+    jobid: 48
+    wildcards: sra=SRR1037436
+
+Submitted job 48 with external jobid '79408118'.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037466/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037466/fastq/, ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466_1.fastq, ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037466/fastq/SRR1037466.log
+    jobid: 13
+    wildcards: sra=SRR1037466
+
+Submitted job 13 with external jobid '79408119'.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037477/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037477/fastq/, ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477_1.fastq, ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037477/fastq/SRR1037477.log
+    jobid: 137
+    wildcards: sra=SRR1037477
+
+Submitted job 137 with external jobid '79408120'.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037465/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037465/fastq/, ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465_1.fastq, ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037465/fastq/SRR1037465.log
+    jobid: 35
+    wildcards: sra=SRR1037465
+
+Submitted job 35 with external jobid '79408121'.
+Error in rule download:
+    jobid: 72
+    output: ../data/external/Cabezas/raw/SRR1037462/fastq/, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_1.fastq, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462.log
+    cluster_jobid: 79408113
+
+Trying to restart job 72.
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037462/fastq/
+
+rule download:
+    output: ../data/external/Cabezas/raw/SRR1037462/fastq/, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_1.fastq, ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462_2.fastq
+    log: ../data/external/Cabezas/raw/SRR1037462/fastq/SRR1037462.log
+    jobid: 72
+    wildcards: sra=SRR1037462
+
+Submitted job 72 with external jobid '79408130'.
+Terminating processes on user request.
+Will exit after finishing currently running jobs.
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037442/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037442/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037455/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037455/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037436/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037436/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037462/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037462/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037466/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037466/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037477/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037477/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037465/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037465/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037443/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037443/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037444/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037444/fastq/
+Removing output files of failed job download since they might be corrupted:
+../data/external/Cabezas/raw/SRR1037461/fastq/
+Skipped removing non-empty directory ../data/external/Cabezas/raw/SRR1037461/fastq/
+Complete log: .snakemake/log/2022-04-28T092038.028061.snakemake.log

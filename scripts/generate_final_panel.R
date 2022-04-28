@@ -3,8 +3,18 @@
 #' the final table for upload into the MissionBio Designer
 
 library(GenomicRanges)
+library(argparse)
+
+parser <- ArgumentParser()
+parser$add_argument("-d", "--dmrs", type="string")
+parser$add_argument("-i", "--imcs", type="string")
+parser$add_argument("-w", "--wsh", type="string", default="../config.yaml")
+parser$add_argument("-n", "--noncut", type="string", default="../config.yaml")
+parser$add_argument("-a", "--always", type="string", default="../config.yaml")
+parser$add_argument("-o", "--output", type="string", default="../config.yaml")
+args <- parser$parse_args()
+
 n_hscs <- 105
-# Overthink this!
 n_mpp1 <- 70
 n_mpp2 <- 70
 n_mpp <- 75
@@ -15,15 +25,15 @@ n_meth <- 20
 n_unmeth <- 20
 n_primers <- 10
 
-hsc_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_HSC.csv')
-mpp1_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_MPP1.csv')
-mpp2_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_MPP2.csv')
-mpp_dmrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/high_filtered_extended_MPP.csv')
-imrs <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/IMS/IMS_annotated.csv')
-wsh <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/filtered_qFDRP/filtered_qFDRP.csv')
-non_cut <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/non_cut_amplicons.csv')
-always_meth <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/meth_unmeth/always_meth_filtered.csv')
-always_unmeth <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/meth_unmeth/always_unmeth_filtered.csv')
+hsc_dmrs <- list.files(args$dmrs, pattern='_filtered_extended_HSC.csv')
+mpp1_dmrs <- list.files(args$dmrs, pattern='_filtered_extended_MPP1.csv')
+mpp2_dmrs <-  list.files(args$dmrs, pattern='_filtered_extended_MPP2.csv')
+mpp_dmrs <-  list.files(args$dmrs, pattern='_filtered_extended_MPP.csv')
+imrs <- list.files(args$imcs, pattern='IMS_annotated.csv')
+wsh <- list.files(args$wsh, pattern='filtered_qFDRP.csv')
+non_cut <- list.files(args$noncut, pattern='non_cut_amplicons.csv')
+always_meth <- list.files(args$always, pattern='always_meth_filtered.csv')
+always_unmeth <- list.files(args$always, pattern='always_unmeth_filtered.csv')
 
 all_frames <- list(HSC=hsc_dmrs,
                    MPP1=mpp1_dmrs,
@@ -77,10 +87,10 @@ final_frame <- data.frame(rbind(all_frames$HSC[1:n_hscs, c('Chromosome', 'Start'
                                  rep('Always_methylated', n_meth),
                                  rep('Always_unmethylated', n_unmeth)))
 write.csv(final_frame, 
-          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_input/CpGs_only.csv',
+          file.path(args$output, 'CpGs_only.csv'),
           row.names=FALSE,
           quote=FALSE)
-saveRDS(all_frames, '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_input/combined_upload.RDS')
+saveRDS(all_frames, file.path(args$output, 'combined_upload.RDS'))
 final_frame[!grepl('Non_cut', final_frame$Type), 'Start'] <- final_frame[!grepl('Non_cut', final_frame$Type), 'Start']-10
 final_frame[!grepl('Non_cut', final_frame$Type), 'End'] <- final_frame[!grepl('Non_cut', final_frame$Type), 'End']+10
 final_frame[grepl('Non_cut', final_frame$Type), 'Start'] <- final_frame[grepl('Non_cut', final_frame$Type), 'Start']+175
@@ -93,6 +103,6 @@ to_write <- data.frame(rep('Region', nrow(final_frame)),
                        paste0(final_frame$Chromosome, ':', final_frame$Start, '-', final_frame$End),
                        final_frame$Name)
 write.csv(to_write, 
-            '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_input/upload_all_samples.csv',
+          file.path(args$output, 'upload_all_samples.csv'),
           row.names=FALSE,
           quote=FALSE)

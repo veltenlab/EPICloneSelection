@@ -56,12 +56,26 @@ sort_index:
   walltime: 12:00:00
   virtual_memory: 20
 
+rnbeads:
+  error: log/rnbeads.err
+  output: log/rnbeads.out
+  queue: long-sl7
+  walltime: 120:00:00
+  virtual_memory: 92
+
 merge:
   error: log/merge_err.txt
   output: log/merge_out.txt
   queue: long-sl7
   walltime: 15:00:00
   virtual_memory: 20
+
+select_dmrs:
+  error: log/dmrs.err
+  output: log/dmrs.out
+  queue: short-sl7
+  walltime: 6:00:00
+  virtual_memory: 40
 
 compute_pdr:
   error: log/pdr.err
@@ -81,8 +95,9 @@ compute_imcs:
 compute_qfdrp:
   error: log/imcs.err
   output: log/imcs.out
-  queue: short-sl7
-  walltime: 6:00:00
-  virtual_memory: 40
+  queue: long-sl7
+  walltime: 720:00:00
+  virtual_memory: 92
+  pe: smp 6
 
 
