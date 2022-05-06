@@ -39,7 +39,7 @@ bismark:
   queue: long-sl7
   walltime: 400:00:00
   pe: smp 4
-  virtual_memory: 50
+  virtual_memory: 92
 
 bismark_extract:
   error: log/bismark_extract_err.txt

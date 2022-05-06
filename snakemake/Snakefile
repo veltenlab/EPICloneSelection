@@ -9,7 +9,7 @@ sample_map = pd.read_csv(config['sample_map'])
 
 rule all:
     input:
-        expand("../data/external/Cabezas/raw/{sra}/fastq/{sra}_1.fastq",sra=sras),
+        expand("../data/external/Cabezas/raw/{sra}/fastq/",sra=sras),
         expand("../data/external/Cabezas/raw/{sra}/trimmed/{sra}_1_val_1.fq",sra=sras),
         expand("../data/external/Cabezas/raw/{sra}/mapped/{sra}.bam/{sra}_1_bismark_bt2_pe.bam",sra=sras),
         expand("../data/external/Cabezas/raw/{sample}/merged/merged.bam",sample=samples),
@@ -18,7 +18,7 @@ rule all:
         "../data/external/Cabezas/raw/rnbeads/report/",
 	    "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
 	    expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples),
-	    "../data/external/Cabezas/IMCs/",
+	    "../data/external/Cabezas/raw/IMCs/",
 	    expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
         "../data/external/Cabezas/raw/meth_unmeth/",
         "../data/external/Cabezas/raw/uncut/",
@@ -57,35 +57,37 @@ rule trim:
         "../data/external/Cabezas/raw/{sra}/trimmed/{sra}.log"
     shell:
         "trim_galore --nextera --paired {input.first} {input.second} -o {output} ; "
-        "rm -rf {input.first}; rm -rf {input.second} ; "
+        #"rm -rf {input.first}; rm -rf {input.second} ; "
         "rm -rf {output.folder}*_1_val_1_val_1.fq; rm -rf {output.folder}*_2_val_2_val_2.fq ; "
         "2> {log}"
 
 rule bismark:
     input:
         ref = "../references/mm10/",
-        first = expand("../data/external/Cabezas/raw/{sra}/trimmed/{sra}_1_val_1.fq", sra=sras),
-        second = expand("../data/external/Cabezas/raw/{sra}/trimmed/{sra}_2_val_2.fq", sra=sras)
+        first = "../data/external/Cabezas/raw/{sra}/trimmed/{sra}_1_val_1.fq",
+        second = "../data/external/Cabezas/raw/{sra}/trimmed/{sra}_2_val_2.fq"
     output:
-        "../data/external/Cabezas/raw/{sample}/mapped/{sample}.bam/{sample}_1_bismark_bt2_pe.bam"
+        "../data/external/Cabezas/raw/{sra}/mapped/{sra}.bam/{sra}_1_bismark_bt2_pe.bam"
     conda:
         "bismark.yml"
     threads:
         4
     log:
-        "../data/external/Cabezas/raw/{sample}/mapped/{sample}.log"
+        "../data/external/Cabezas/raw/{sra}/mapped/{sra}.log"
     params:
         threads = 4,
-        tmp_dir = "tmp"
+        s = "{sra}"
     shell:
-        "bismark --bowtie2 {input.ref} -1 {input.first} -2 {input.second} -o {output} --temp_dir {params.tmp_dir} -p {params.threads} ; "
-        "rm -rf {input.first}; rm -rf {input.second} ; "
+        "if [ ! -d tmp ] ; then mkdir tmp ; fi ; "
+        "if [ ! -d tmp/{params.s} ] ; then mkdir tmp/{params.s} ; fi ; "
+        "bismark --bowtie2 {input.ref} -1 {input.first} -2 {input.second} -o {output} --temp_dir tmp/{params.s} -p {params.threads} ; "
+        #"rm -rf {input.first}; rm -rf {input.second} ; "
         "2> {log}"
 
 rule merge:
     input:
-        geo_acc = config['sample_map']
-       # folder = "../data/external/Cabezas/raw/"        
+        geo_acc = config['sample_map'],
+        aligned = expand("../data/external/Cabezas/raw/{sra}/mapped/{sra}.bam/{sra}_1_bismark_bt2_pe.bam", sra=sras)        
     output:
         merged = "../data/external/Cabezas/raw/{sample}/merged/merged.bam"
     params:
@@ -102,8 +104,8 @@ rule merge:
 
         merge_cmd = "samtools merge " + output.merged + all_bams + " -n"
         proc = subprocess.run(merge_cmd,shell=True)
-        cleanup = "rm -rf " + params.folder + "SRR*"
-        proc = subprocess.run(cleanup,shell=True)
+        #cleanup = "rm -rf " + params.folder + "SRR*"
+        #proc = subprocess.run(cleanup,shell=True)
 
 rule sort_index:
     input:
@@ -182,7 +184,7 @@ rule compute_imcs:
     input:
         "../data/external/Cabezas/raw/rnbeads/report/"
     output:
-        "../data/external/Cabezas/IMCs/"
+        "../data/external/Cabezas/raw/IMCs/"
     conda:
         "rnbeads.yml"
     log:
@@ -234,9 +236,9 @@ rule generate_uncut:
 
 rule generate_panel:
     input:
-        wsh = "../data/external/Cabezas/raw/WSH/",
-        imc = "../data/external/Cabezas/raw/IMC/",
-        dmr = "../data/external/Cabezas/raw/DMRs/",
+        wsh = expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
+        imc = "../data/external/Cabezas/raw/IMCs/",
+        dmr = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
         noncut = "../data/external/Cabezas/raw/uncut/",
         always = "../data/external/Cabezas/raw/meth_unmeth/"
     output:
@@ -246,5 +248,5 @@ rule generate_panel:
     log:
         "../data/external/Cabezas/raw/final_panel/create_panel.log"
     shell:
-        "Rscript scripts/generate_final_panel.R --dmrs {input.dmr} --imc {input.imc} --wsh {input.wsh} --noncut {input.noncut} --always {input.always} --output {output}"
+        "Rscript scripts/generate_final_panel.R --dmrs ../data/external/Cabezas/raw/DMRs/ --imc {input.imc} --wsh ../data/external/Cabezas/raw/WSH/ --noncut {input.noncut} --always {input.always} --output {output}"
 
