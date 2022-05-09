@@ -70,17 +70,14 @@ rule bismark:
         "../data/external/Cabezas/raw/{sra}/mapped/{sra}.bam/{sra}_1_bismark_bt2_pe.bam"
     conda:
         "bismark.yml"
-    threads:
-        4
     log:
         "../data/external/Cabezas/raw/{sra}/mapped/{sra}.log"
     params:
-        threads = 4,
         s = "{sra}"
     shell:
         "if [ ! -d tmp ] ; then mkdir tmp ; fi ; "
         "if [ ! -d tmp/{params.s} ] ; then mkdir tmp/{params.s} ; fi ; "
-        "bismark --bowtie2 {input.ref} -1 {input.first} -2 {input.second} -o {output} --temp_dir tmp/{params.s} -p {params.threads} ; "
+        "bismark --bowtie2 {input.ref} -1 {input.first} -2 {input.second} -o {output} --temp_dir tmp/{params.s} ; "
         #"rm -rf {input.first}; rm -rf {input.second} ; "
         "2> {log}"
 
