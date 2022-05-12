@@ -38,7 +38,7 @@ bismark:
   output: log/bismark_out.txt
   queue: long-sl7
   walltime: 400:00:00
-  pe: smp 8
+  pe: smp 16
   virtual_memory: 92
 
 bismark_extract:

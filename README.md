@@ -18,7 +18,7 @@ Further necessary annotations include enhancer annotations, which can be downloa
 The pipeline can be started using:
 
 ```
-snakemake --profile sge --use-conda
+snakemake --profile sge --use-conda --cluster-config cluster.yaml
 ```
 
 # Contact

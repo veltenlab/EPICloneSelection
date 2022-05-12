@@ -73,11 +73,12 @@ rule bismark:
     log:
         "../data/external/Cabezas/raw/{sra}/mapped/{sra}.log"
     params:
-        s = "{sra}"
+        s = "{sra}",
+	threads = 4
     shell:
         "if [ ! -d tmp ] ; then mkdir tmp ; fi ; "
         "if [ ! -d tmp/{params.s} ] ; then mkdir tmp/{params.s} ; fi ; "
-        "bismark --bowtie2 {input.ref} -1 {input.first} -2 {input.second} -o {output} --temp_dir tmp/{params.s} ; "
+        "bismark --bowtie2 {input.ref} -1 {input.first} -2 {input.second} -o {output} --temp_dir tmp/{params.s} -p {params.threads}; "
         #"rm -rf {input.first}; rm -rf {input.second} ; "
         "2> {log}"
 
