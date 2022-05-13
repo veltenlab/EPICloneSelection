@@ -93,7 +93,7 @@ rule merge:
         max_size = "50G",
 	folder = "../data/external/Cabezas/raw/" 
     log:
-        "../data/external/Cabezas/raw/{sample}/fastq/{sample}.log"
+        "../data/external/Cabezas/raw/{sample}/merged/{sample}.log"
     run:
         srrs = sample_map[sample_map['GEO_Accession (exp)']==params.s]['Run']
         all_bams = " "
