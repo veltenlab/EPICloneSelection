@@ -1,12 +1,4 @@
 library(RnBeads)
 theme_set(theme_bw())
-xml.file <- "rnbOptions.xml"
-arch <- new("ClusterArchitectureSGE")
-arch <- setExecutable(arch,"R","R")
-arch <- setExecutable(arch,"Rscript","Rscript")
-rnb.cr <- new("RnBClusterRun",arch)
-rnb.cr <- setModuleResourceRequirements(rnb.cr,c(h_vmem="120G",virtual_free="120G",h_rt="05:00:00"),"all")
-rnb.cr <- setModuleResourceRequirements(rnb.cr,c(h_vmem="120G",virtual_free="120G",h_rt="05:00:00", queue='long-sl7'),"differential")
-rnb.cr <- setModuleNumCores(rnb.cr,1L,"all")
-rnb.cr <- setModuleNumCores(rnb.cr,1L,"exploratory")
-run(rnb.cr, "rnB_Cabezas", xml.file, queue="short-sl7")
+xml.file <- "../RnBeads/rnbOptions.xml"
+rnb.run.xml(xml.file)

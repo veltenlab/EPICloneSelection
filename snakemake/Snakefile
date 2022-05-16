@@ -12,10 +12,10 @@ rule all:
         expand("../data/external/Cabezas/raw/{sra}/fastq/",sra=sras),
         expand("../data/external/Cabezas/raw/{sra}/trimmed/{sra}_1_val_1.fq",sra=sras),
         expand("../data/external/Cabezas/raw/{sra}/mapped/{sra}.bam/{sra}_1_bismark_bt2_pe.bam",sra=sras),
-        expand("../data/external/Cabezas/raw/{sample}/merged/merged.bam",sample=samples),
-        expand("../data/external/Cabezas/raw/{sample}/merged/merged_sorted.bam",sample=samples),
+        expand("../data/external/Cabezas/raw/{sample}/merged/{sample}.bam",sample=samples),
+        expand("../data/external/Cabezas/raw/{sample}/merged/{sample}_sorted.bam",sample=samples),
         expand("../data/external/Cabezas/raw/{sample}/extract/",sample=samples),
-        "../data/external/Cabezas/raw/rnbeads/report/",
+        "../data/external/Cabezas/raw/rnbeads/",
 	    "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
 	    expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples),
 	    "../data/external/Cabezas/raw/IMCs/",
@@ -87,7 +87,7 @@ rule merge:
         geo_acc = config['sample_map'],
         aligned = expand("../data/external/Cabezas/raw/{sra}/mapped/{sra}.bam/{sra}_1_bismark_bt2_pe.bam", sra=sras)        
     output:
-        merged = "../data/external/Cabezas/raw/{sample}/merged/merged.bam"
+        merged = "../data/external/Cabezas/raw/{sample}/merged/{sample}.bam"
     params:
         s = "{sample}",
         max_size = "50G",
@@ -107,20 +107,20 @@ rule merge:
 
 rule sort_index:
     input:
-        "../data/external/Cabezas/raw/{sample}/merged/merged.bam"
+        "../data/external/Cabezas/raw/{sample}/merged/{sample}.bam"
     output:
-        "../data/external/Cabezas/raw/{sample}/merged/merged_sorted.bam"
+        "../data/external/Cabezas/raw/{sample}/merged/{sample}_sorted.bam"
     conda:
         "/users/lvelten/mscherer/conda/envs/bismark.yml"
     params:
         s = "{sample}"
     shell:
-        "samtools sort {input} -o ../data/external/Cabezas/raw/{params.s}/merged/merged_sorted.bam ; "
-        "samtools index ../data/external/Cabezas/raw/{params.s}/merged/merged_sorted.bam"
+        "samtools sort {input} -o ../data/external/Cabezas/raw/{params.s}/merged/{params.s}_sorted.bam ; "
+        "samtools index ../data/external/Cabezas/raw/{params.s}/merged/{params.s}_sorted.bam"
 
 rule bismark_extract:
     input:
-        "../data/external/Cabezas/raw/{sample}/merged/merged.bam"
+        "../data/external/Cabezas/raw/{sample}/merged/{sample}.bam"
     output:
         "../data/external/Cabezas/raw/{sample}/extract/"
     conda:
@@ -139,7 +139,7 @@ rule rnbeads:
     input:
         expand("../data/external/Cabezas/raw/{sample}/extract/", sample=samples)
     output:
-        "../data/external/Cabezas/raw/rnbeads/report/"
+        "../data/external/Cabezas/raw/rnbeads/"
     conda:
         "rnbeads.yml"
     log:
@@ -147,12 +147,15 @@ rule rnbeads:
     params:
         script = "../RnBeads/script.R"
     shell:
-        "cp -s ../data/external/Cabezas/raw/*/extract/*.cov.gz ../data/external/Cabezas/raw/rnbeads/data/"
+        "if [ ! -d {output}/data/ ] ; then mkdir {output}/data/ ; "
+        "ln -s ../../*/extract/*.cov.gz {output}/data/ ; "
+        "fi ; "
+		#"if [ -d ] {output}/report/ ; then rm -rf {output}/report/ ; fi ; "
         "Rscript {params.script}"
 
 rule select_dmrs:
     input:
-        "../data/external/Cabezas/raw/rnbeads/report/"
+        "../data/external/Cabezas/raw/rnbeads/"
     output:
         "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv"
     conda:
@@ -162,11 +165,12 @@ rule select_dmrs:
     params:
         config = "../config.yaml"
     shell:
-        "Rscript scripts/select_reliable_DMRs.R --report {input} --output {output} --config {params.config}"
+        "Rscript scripts/select_reliable_DMRs.R --report {input}/report/ --output {output} --config {params.config}"
 
 rule compute_pdr:
     input:
-        "../data/external/Cabezas/raw/{sample}/merged/merged_sorted.bam"
+        bam = "../data/external/Cabezas/raw/{sample}/merged/{sample}_sorted.bam",
+        report = "../data/external/Cabezas/raw/rnbeads/"
     output:
         "../data/external/Cabezas/raw/WSH/{sample}/PDR/"
     conda:
@@ -176,11 +180,11 @@ rule compute_pdr:
     params:
 	    s = "{sample}"
     shell:
-        "Rscript WSHScripts/scores/PDR/compute_PDR.R PDR_{params.s} {output} {input} ../data/external/Cabezas/raw/rnbeads/report/cluster_run/preprocessing_RnBSet/ 6"
+        "Rscript ../WSHScripts/scores/PDR/compute_PDR.R PDR_{params.s} {output} {input.bam} {input.report}/report/cluster_run/preprocessing_RnBSet/  6"
 
 rule compute_imcs:
     input:
-        "../data/external/Cabezas/raw/rnbeads/report/"
+        "../data/external/Cabezas/raw/rnbeads/"
     output:
         "../data/external/Cabezas/raw/IMCs/"
     conda:
@@ -188,11 +192,12 @@ rule compute_imcs:
     log:
         "../data/external/Cabezas/IMCs/imc.log"
     shell:
-        "Rscript IMC/findIMC.R --rnbset {input}/cluster_run/preprocessing_RnBSet/ --output {output} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/"
+        "Rscript IMC/findIMC.R --rnbset {input}/report/cluster_run/preprocessing_RnBSet/ --output {output} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/"
 
 rule compute_qfdrp:
     input:
-        "../data/external/Cabezas/raw/{sample}/merged/merged_sorted.bam"
+        bam = "../data/external/Cabezas/raw/{sample}/merged/{sample}_sorted.bam",
+        report = "../data/external/Cabezas/raw/rnbeads/"
     output:
         "../data/external/Cabezas/raw/WSH/{sample}/qFDRP/"
     conda:
@@ -202,11 +207,11 @@ rule compute_qfdrp:
     params:
 	    s = "{sample}"
     shell:
-        "Rscript WSHScripts/scores/qFDRP/compute_qFDRP.R qFDRP_{params.s} {output} {input} ../data/external/Cabezas/raw/rnbeads/report/cluster_run/preprocessing_RnBSet/ 6"
+        "Rscript WSHScripts/scores/qFDRP/compute_qFDRP.R qFDRP_{params.s} {output} {input.bam} {input.report}/report/cluster_run/preprocessing_RnBSet/ 6"
 
 rule generate_always_meth_unmeth:
     input:
-        "../data/external/Cabezas/raw/rnbeads/report/"
+        "../data/external/Cabezas/raw/rnbeads/"
     output:
         "../data/external/Cabezas/raw/meth_unmeth/"
     conda:
@@ -216,11 +221,11 @@ rule generate_always_meth_unmeth:
     params:
         config = "../config.yaml"
     shell:
-        "Rscript scripts/select_always_meth_unmeth.R --report {input} --output {output} --config {params.config}"
+        "Rscript scripts/select_always_meth_unmeth.R --report {input}/report/ --output {output} --config {params.config}"
 
 rule generate_uncut:
     input:
-        "../data/external/Cabezas/raw/rnbeads/report/"
+        "../data/external/Cabezas/raw/rnbeads/"
     output:
         "../data/external/Cabezas/raw/uncut/"
     conda:
