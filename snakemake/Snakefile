@@ -16,10 +16,10 @@ rule all:
         expand("../data/external/Cabezas/raw/{sample}/merged/{sample}_sorted.bam",sample=samples),
         expand("../data/external/Cabezas/raw/{sample}/extract/",sample=samples),
         "../data/external/Cabezas/raw/rnbeads/",
-	    "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
-	    expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples),
-	    "../data/external/Cabezas/raw/IMCs/",
-	    expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
+        "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
+        expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples),
+        "../data/external/Cabezas/raw/IMCs/",
+        expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
         "../data/external/Cabezas/raw/meth_unmeth/",
         "../data/external/Cabezas/raw/uncut/",
         "../data/external/Cabezas/raw/final_panel/"
@@ -74,7 +74,7 @@ rule bismark:
         "../data/external/Cabezas/raw/{sra}/mapped/{sra}.log"
     params:
         s = "{sra}",
-	threads = 4
+        threads = 4
     shell:
         "if [ ! -d tmp ] ; then mkdir tmp ; fi ; "
         "if [ ! -d tmp/{params.s} ] ; then mkdir tmp/{params.s} ; fi ; "
@@ -91,7 +91,7 @@ rule merge:
     params:
         s = "{sample}",
         max_size = "50G",
-	folder = "../data/external/Cabezas/raw/" 
+        folder = "../data/external/Cabezas/raw/" 
     log:
         "../data/external/Cabezas/raw/{sample}/merged/{sample}.log"
     run:
@@ -148,9 +148,9 @@ rule rnbeads:
         script = "../RnBeads/script.R"
     shell:
         "if [ ! -d {output}/data/ ] ; then mkdir {output}/data/ ; "
-        "ln -s ../../*/extract/*.cov.gz {output}/data/ ; "
+        "ln -s $(pwd)/../data/external/Cabezas/raw/*/extract/*.cov.gz {output}/data/ ; "
         "fi ; "
-		#"if [ -d ] {output}/report/ ; then rm -rf {output}/report/ ; fi ; "
+        #"if [ -d ] {output}/report/ ; then rm -rf {output}/report/ ; fi ; "
         "Rscript {params.script}"
 
 rule select_dmrs:
@@ -165,7 +165,7 @@ rule select_dmrs:
     params:
         config = "../config.yaml"
     shell:
-        "Rscript scripts/select_reliable_DMRs.R --report {input}/report/ --output {output} --config {params.config}"
+        "Rscript ../scripts/select_reliable_DMRs.R --report {input}/report/ --output {output} --config {params.config} --digest ../scripts/checkForCutSite.R"
 
 rule compute_pdr:
     input:
@@ -178,13 +178,14 @@ rule compute_pdr:
     log:
         "../data/external/Cabezas/raw/WSH/{sample}/PDR/pdr.log"
     params:
-	    s = "{sample}"
+        s = "{sample}"
     shell:
-        "Rscript ../WSHScripts/scores/PDR/compute_PDR.R PDR_{params.s} {output} {input.bam} {input.report}/report/cluster_run/preprocessing_RnBSet/  6"
+        "Rscript ../WSHScripts/scores/PDR/compute_PDR.R PDR_{params.s} {output} {input.bam} {input.report}/report/rnbSet_preprocessed/  6"
 
 rule compute_imcs:
     input:
-        "../data/external/Cabezas/raw/rnbeads/"
+        rnbeads = "../data/external/Cabezas/raw/rnbeads/",
+        pdr = expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples)
     output:
         "../data/external/Cabezas/raw/IMCs/"
     conda:
@@ -192,7 +193,7 @@ rule compute_imcs:
     log:
         "../data/external/Cabezas/IMCs/imc.log"
     shell:
-        "Rscript IMC/findIMC.R --rnbset {input}/report/cluster_run/preprocessing_RnBSet/ --output {output} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/"
+        "Rscript ../IMC/findIMC.R --rnbset {input.rnbeads}/report/rnbSet_preprocessed/ --output {output} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/  --digest ../scripts/checkForCutSite.R"
 
 rule compute_qfdrp:
     input:
@@ -203,11 +204,11 @@ rule compute_qfdrp:
     conda:
         "rnbeads.yml"
     log:
-        "../data/external/Cabezas/raw/WSH/{sample}/qFDRP/pdr.log"
+        "../data/external/Cabezas/raw/WSH/{sample}/qFDRP/qfdrp.log"
     params:
-	    s = "{sample}"
+        s = "{sample}"
     shell:
-        "Rscript WSHScripts/scores/qFDRP/compute_qFDRP.R qFDRP_{params.s} {output} {input.bam} {input.report}/report/cluster_run/preprocessing_RnBSet/ 6"
+        "Rscript ../WSHScripts/scores/qFDRP/compute_qFDRP.R qFDRP_{params.s} {output} {input.bam} {input.report}/report/rnbSet_preprocessed/ 6"
 
 rule generate_always_meth_unmeth:
     input:
@@ -221,7 +222,7 @@ rule generate_always_meth_unmeth:
     params:
         config = "../config.yaml"
     shell:
-        "Rscript scripts/select_always_meth_unmeth.R --report {input}/report/ --output {output} --config {params.config}"
+        "Rscript ../scripts/select_always_meth_unmeth.R --report {input}/report/ --output {output} --config {params.config} --digest ../scripts/checkForCutSite.R"
 
 rule generate_uncut:
     input:
@@ -235,7 +236,7 @@ rule generate_uncut:
     params:
         config = "../config.yaml"
     shell:
-        "Rscript scripts/construct_non_cut.R --output {output} --config {params.config}"
+        "Rscript ../scripts/construct_non_cut.R --output {output} --config {params.config}"
 
 rule generate_panel:
     input:
@@ -251,5 +252,5 @@ rule generate_panel:
     log:
         "../data/external/Cabezas/raw/final_panel/create_panel.log"
     shell:
-        "Rscript scripts/generate_final_panel.R --dmrs ../data/external/Cabezas/raw/DMRs/ --imc {input.imc} --wsh ../data/external/Cabezas/raw/WSH/ --noncut {input.noncut} --always {input.always} --output {output}"
+        "Rscript ../scripts/generate_final_panel.R --dmrs ../data/external/Cabezas/raw/DMRs/ --imc {input.imc} --wsh ../data/external/Cabezas/raw/WSH/ --noncut {input.noncut} --always {input.always} --output {output}"
 

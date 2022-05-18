@@ -1,7 +1,7 @@
 <rnb.xml>
 	<analysis.name>Cabezas Mouse HSCs</analysis.name>
 	<logging>true</logging>
-	<data.source>../data/external/Cabezas/raw/rnbeads/data/,sample_annotation.csv,bismarkCov</data.source>
+	<data.source>../data/external/Cabezas/raw/rnbeads/data/,../RnBeads/sample_annotation.csv,bismarkCov</data.source>
 	<dir.reports>../data/external/Cabezas/raw/rnbeads/report/</dir.reports>
 	<data.type>bs.bed.dir</data.type>
 	<assembly>mm10</assembly>
@@ -96,8 +96,8 @@
 	<covariate.adjustment.columns null='null'></covariate.adjustment.columns>
 	<differential.adjustment.sva>true</differential.adjustment.sva>
 	<differential.adjustment.celltype>true</differential.adjustment.celltype>
-	<differential.enrichment.go>true</differential.enrichment.go>
-	<differential.enrichment.lola>true</differential.enrichment.lola>
+	<differential.enrichment.go>false</differential.enrichment.go>
+	<differential.enrichment.lola>false</differential.enrichment.lola>
 	<differential.report.sites>true</differential.report.sites>
 	<export.to.bed>true</export.to.bed>
 	<export.to.trackhub>bigBed,bigWig</export.to.trackhub>

@@ -8,16 +8,17 @@ library(RnBeads.mm10)
 library(argparse)
 
 parser <- ArgumentParser()
-parser$add_argument("-r", "--report", type="string")
-parser$add_argument("-o", "--output", type="string")
-parser$add_argument("-c", "--config", type="string", default="../config.yaml")
+parser$add_argument("-r", "--report", type="character")
+parser$add_argument("-o", "--output", type="character")
+parser$add_argument("-c", "--config", type="character", default="../config.yaml")
+parser$add_argument("-d", "--digest", type="character")
 args <- parser$parse_args()
 
 report <- args$report
 output <- args$output
 config_file <- args$config
 config <- yaml.load_file(config_file)
-
+cut_file <- args$digest
 
 all.comparisons <- list.files(file.path(report,'differential_methylation_data'), full.names=TRUE, pattern = 'diffMethTable_site')
 system(paste0('rm -rf ', output,'/always_meth.csv'))
@@ -70,7 +71,7 @@ dmrs <- lapply(all.comparisons,function(comp){
     return(list(diff.positive,diff.negative))
 })
 
-source('checkForCutSite.R')
+source(cut_file)
 
 always_meth <- list.files(output,pattern='always_meth.csv', full.names=TRUE)
 always_meth <- checkForCutSite(read.csv(always_meth),

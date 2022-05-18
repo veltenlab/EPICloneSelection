@@ -9,11 +9,12 @@ library(RnBeads.mm10)
 library(argparse)
 
 parser <- ArgumentParser()
-parser$add_argument("-r", "--rnbset", type="string")
-parser$add_argument("-o", "--output", type="string")
-parser$add_argument("-d", "--dmrs", type="string")
-parser$add_argument("-p", "--pdrs", type="string")
-parser$add_argument("-c", "--config", type="string", default="config.yaml")
+parser$add_argument("-r", "--rnbset", type="character")
+parser$add_argument("-o", "--output", type="character")
+parser$add_argument("-d", "--dmrs", type="character")
+parser$add_argument("-p", "--pdrs", type="character")
+parser$add_argument("-c", "--config", type="character", default="config.yaml")
+parser$add_argument("-a", "--digest", type="character")
 args <- parser$parse_args()
 
 rnb_set_path <- args$rnbset
@@ -22,7 +23,7 @@ all_dmrs <- list.files(args$dmrs, patter='filtered_extended_')
 pdrs <- sapply(list.dirs(args$pdrs), function(x){
   list.files(file.path(x, 'PDR'), pattern='.csv')
 })
-pdrs <- sapply(list.dirs(args$pdrs), function(x){
+pdr_annotations <- sapply(list.dirs(args$pdrs), function(x){
   list.files(file.path(x, 'PDR'), pattern='.RData')
 })
 config_file <- args$config
@@ -42,8 +43,9 @@ for(i in 1:length(pdr_annotations)){
   all_pdr[queryHits(op), i] <- pdr[subjectHits(op), ]
 }
 annotation <- last_anno
+cut_file <- args$digest
 
-source('checkForCutSite.R')
+source(cut_file)
 
 rnb_set <- load.rnb.set(rnb_set_path)
 anno_fr <- annotation(rnb_set)

@@ -100,4 +100,24 @@ compute_qfdrp:
   virtual_memory: 92
   pe: smp 6
 
+generate_always_meth_unmeth:
+  error: log/meth_unmeth.err
+  output: log/meth_unmeth.out
+  queue: short-sl7
+  walltime: 2:00:00
+  virtual_memory: 40
+
+generate_uncut:
+  error: log/uncut.err
+  output: log/uncut.out
+  queue: short-sl7
+  walltime: 2:00:00
+  virtual_memory: 40
+
+generate_panel:
+  error: log/generate_panel.err
+  output: log/generate_panel.out
+  queue: short-sl7
+  walltime: 2:00:00
+  virtual_memory: 40
 
