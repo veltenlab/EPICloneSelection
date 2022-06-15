@@ -89,4 +89,5 @@ always_unmeth <- checkForCutSite(read.csv(always_unmeth),
                                  decreasing = FALSE,
                                  use.extended = TRUE)
 write.csv(always_unmeth, file.path(output, 'always_unmeth_filtered.csv'))
-
+always_meth_unmeth <- rbind.fill(always_meth, always_unmeth)
+write.csv(always_meth_unmeth, file.path(output, 'always_meth_unmeth_filtered.csv'))

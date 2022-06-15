@@ -21,7 +21,7 @@ rule all:
         "../data/external/Cabezas/raw/IMCs/",
         expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
         "../data/external/Cabezas/raw/meth_unmeth/",
-        "../data/external/Cabezas/raw/uncut/",
+        "../data/external/Cabezas/raw/uncut/uncut.csv",
         "../data/external/Cabezas/raw/final_panel/"
 
 rule download:
@@ -157,7 +157,8 @@ rule select_dmrs:
     input:
         "../data/external/Cabezas/raw/rnbeads/"
     output:
-        "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv"
+        folder = "../data/external/Cabezas/raw/DMRs/",
+        file = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv"
     conda:
         "rnbeads.yml"
     log:
@@ -165,7 +166,7 @@ rule select_dmrs:
     params:
         config = "../config.yaml"
     shell:
-        "Rscript ../scripts/select_reliable_DMRs.R --report {input}/report/ --output {output} --config {params.config} --digest ../scripts/checkForCutSite.R"
+        "Rscript ../scripts/select_reliable_DMRs.R --report {input}/report/ --output {output.folder} --config {params.config} --digest ../scripts/checkForCutSite.R"
 
 rule compute_pdr:
     input:
@@ -185,7 +186,8 @@ rule compute_pdr:
 rule compute_imcs:
     input:
         rnbeads = "../data/external/Cabezas/raw/rnbeads/",
-        pdr = expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples)
+        pdr = expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples),
+        dmrs = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv"
     output:
         "../data/external/Cabezas/raw/IMCs/"
     conda:
@@ -228,7 +230,7 @@ rule generate_uncut:
     input:
         "../data/external/Cabezas/raw/rnbeads/"
     output:
-        "../data/external/Cabezas/raw/uncut/"
+        "../data/external/Cabezas/raw/uncut/uncut.csv"
     conda:
         "rnbeads.yml"
     log:
@@ -243,7 +245,7 @@ rule generate_panel:
         wsh = expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
         imc = "../data/external/Cabezas/raw/IMCs/",
         dmr = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
-        noncut = "../data/external/Cabezas/raw/uncut/",
+        noncut = "../data/external/Cabezas/raw/uncut/uncut.csv",
         always = "../data/external/Cabezas/raw/meth_unmeth/"
     output:
         "../data/external/Cabezas/raw/final_panel/"

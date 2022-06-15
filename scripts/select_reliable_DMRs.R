@@ -37,10 +37,10 @@ dmrs <- lapply(all.comparisons,function(comp){
     diff.table <- diff.table[abs(diff.table$mean.diff)>config[['dmcs']][['min_diff']],]
     row.names(diff.table) <- paste0(diff.table$Chromosome, '_', diff.table$Start)
     diff.table[['comparison']] <- paste(group.names[1], 'vs.', group.names[2])
-    diff.positive <- diff.table[diff.table$mean.diff<0,]
-    diff.positive$type <- paste0('high_', group.names[2])
+    diff.positive <- diff.table[diff.table$mean.diff>0,]
+    diff.positive$type <- paste0('high_', group.names[1])
     row.names(diff.positive) <- paste0(diff.positive$Chromosome, '_', diff.positive$Start)
-    file.positive <- file.path(output,paste0('high_', group.names[2], '.csv'))
+    file.positive <- file.path(output,paste0('high_', group.names[1], '.csv'))
     if(file.exists(file.positive)){
         all.positive <- read.csv(file.positive,row.names = 1)
         if(nrow(all.positive)<4){
@@ -52,22 +52,7 @@ dmrs <- lapply(all.comparisons,function(comp){
     }else{
         write.csv(diff.positive,file.positive)
     }
-    diff.negative <- diff.table[diff.table$mean.diff>0,]
-    diff.negative$type <- paste0('high_', group.names[1])
-    file.negative <- file.path(output,paste0('high_', group.names[1], '.csv'))
-    row.names(diff.negative) <- paste0(diff.negative$Chromosome, '_', diff.negative$Start)
-    if(file.exists(file.negative)){
-        all.negative <- read.csv(file.negative, row.names=1)
-        if(nrow(all.negative)<4){
-            stop('Please delete the high_* files in the output directory')
-        }
-        both <- intersect(row.names(diff.negative),row.names(all.negative))
-        all.negative <- data.frame(all.negative[both,],diff.negative[both,])
-        write.csv(all.negative,file.negative)
-    }else{
-        write.csv(diff.negative,file.negative)
-    }
-    return(list(diff.positive,diff.negative))
+    return(diff.positive)
 })
 
 all.files <- list.files(output, full.names = TRUE, pattern = 'high')
@@ -77,7 +62,7 @@ dmrs.all <- lapply(all.files, function(dmr){
     dmr <- checkForCutSite(dmr,
                     number=min(nrow(dmr), 500),
                     config=config_file,
-                    sort.col=c('mean.diff', 'mean.diff.1', 'mean.diff.2'),
+                    sort.col=c('mean.diff'),
                     use.extended=TRUE)
     print(nrow(dmr))
     tfbs_sites <- colnames(dmr)[(which(colnames(dmr)=='GCContent')+1):ncol(dmr)]

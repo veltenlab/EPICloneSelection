@@ -20,11 +20,11 @@ args <- parser$parse_args()
 rnb_set_path <- args$rnbset
 out_folder <- args$output
 all_dmrs <- list.files(args$dmrs, patter='filtered_extended_')
-pdrs <- sapply(list.dirs(args$pdrs), function(x){
-  list.files(file.path(x, 'PDR'), pattern='.csv')
+pdrs <- sapply(list.dirs(args$pdrs, recursive=FALSE), function(x){
+  list.files(file.path(x, 'PDR'), pattern='.csv', full.names=TRUE)
 })
-pdr_annotations <- sapply(list.dirs(args$pdrs), function(x){
-  list.files(file.path(x, 'PDR'), pattern='.RData')
+pdr_annotations <- sapply(list.dirs(args$pdrs, recursive=FALSE), function(x){
+  list.files(file.path(x, 'PDR'), pattern='.RData', full.names=TRUE)
 })
 config_file <- args$config
 config <- yaml.load_file(config_file)
