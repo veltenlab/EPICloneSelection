@@ -75,6 +75,7 @@ checkForCutSite <- function(dat,
   genes <- unlist(rnb.get.annotation('genes',assembly = gen.version))
   names(genes) <- gsub('chr[[:alnum:]][[:punct:]]', '', names(genes))
   names(genes) <- gsub('chr[[:alnum:]][[:alnum:]][[:punct:]]', '', names(genes))
+  variable_genes <- intersect(variable_genes, names(genes))
   promoters <- unlist(rnb.get.annotation('promoters',assembly = gen.version))
   reg.elements <- read.csv(config[['annotations']][['enhancer_catalog']])
   row.names(reg.elements) <- paste0(reg.elements$Chr,'_',reg.elements$Start)
