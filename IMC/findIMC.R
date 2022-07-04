@@ -19,7 +19,7 @@ args <- parser$parse_args()
 
 rnb_set_path <- args$rnbset
 out_folder <- args$output
-all_dmrs <- list.files(args$dmrs, patter='filtered_extended_')
+all_dmrs <- list.files(args$dmrs, pattern='high_filtered_', full.names=TRUE)
 pdrs <- sapply(list.dirs(args$pdrs, recursive=FALSE), function(x){
   list.files(file.path(x, 'PDR'), pattern='.csv', full.names=TRUE)
 })
@@ -55,23 +55,23 @@ dmrs_gr <- makeGRangesFromDataFrame(dmrs, end='Start')
 dmrs_gr <- resize(dmrs_gr, width = 500, fix = 'center')
 op <- findOverlaps(anno_gr, dmrs_gr)
 anno_gr <- anno_gr[-queryHits(op)]
-meth_data <- meth(rnb_set)[, c("GSM1274424",
-                               "GSM1274425",
-                               "GSM1274426")]
-meth_data <- meth_data[-queryHits(op), ]
+meth_data <- meth(rnb_set)[, c("GSM1274424"), drop=FALSE]#,
+#                               "GSM1274425",
+#                               "GSM1274426"), drop=FALSE]
+meth_data <- meth_data[-queryHits(op), , drop=FALSE]
 is_intermediate <- apply(meth_data, 1, function(x){
   all(x>0.25&x<0.75)
 })
-meth_data <- meth_data[is_intermediate, ]
+meth_data <- meth_data[is_intermediate, , drop=FALSE]
 anno_gr <- anno_gr[is_intermediate]
-covg_data <- covg(rnb_set)[, c("GSM1274424",
-                               "GSM1274425",
-                               "GSM1274426")]
-covg_data <- covg_data[-queryHits(op), ][is_intermediate, ]
+covg_data <- covg(rnb_set)[, c("GSM1274424"), drop=FALSE]#,
+#                               "GSM1274425",
+#                              "GSM1274426"), drop=FALSE]
+covg_data <- covg_data[-queryHits(op), , drop=FALSE][is_intermediate, , drop=FALSE]
 mean_covg <- rowMeans(covg_data)
 too_high <- mean_covg>quantile(mean_covg, .95)
 mean_covg <- mean_covg[!too_high]
-meth_data <- meth_data[!too_high, ]
+meth_data <- meth_data[!too_high, , drop=FALSE]
 anno_gr <- anno_gr[!too_high]
 op <- findOverlaps(anno_gr, annotation)
 pdrs <- rowMeans(all_pdr)

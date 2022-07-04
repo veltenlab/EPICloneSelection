@@ -194,8 +194,10 @@ rule compute_imcs:
         "rnbeads.yml"
     log:
         "../data/external/Cabezas/IMCs/imc.log"
+    params:
+        config = "../config.yaml"
     shell:
-        "Rscript ../IMC/findIMC.R --rnbset {input.rnbeads}/report/rnbSet_preprocessed/ --output {output} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/  --digest ../scripts/checkForCutSite.R"
+        "Rscript ../IMC/findIMC.R --rnbset {input.rnbeads}/report/rnbSet_preprocessed/ --output {output} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/  --digest ../scripts/checkForCutSite.R --config {params.config} --digest ../scripts/checkForCutSite.R"
 
 rule compute_qfdrp:
     input:

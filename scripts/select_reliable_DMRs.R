@@ -72,7 +72,7 @@ dmrs.all <- lapply(all.files, function(dmr){
     dmr <- dmr[!all_nas, ]
 })
 all.names <- list.files(output, pattern = 'high')
-all.names <- gsub('high_','high_filtered_extended_',all.names)
+all.names <- gsub('high_','high_filtered_',all.names)
 for(i in 1:length(dmrs.all)){
     write.csv(dmrs.all[[i]],file.path(output,all.names[i]))
 }
