@@ -3,6 +3,7 @@ general:
  genome: mm10
  pu1_motif: AGGAGT
  max_cpgs: 10
+ n_imcs: 300
 
 input:
  type: bed

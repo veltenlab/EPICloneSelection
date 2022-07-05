@@ -83,7 +83,7 @@ meth_data_fr <- data.frame(Chromosome=seqnames(anno_gr),
                     MeanCovg=mean_covg)
 meth_data_fr[queryHits(op), 'PDR'] <- pdrs
 res <- checkForCutSite(na.omit(meth_data_fr),
-                       number=750,
+                       number=config[['general']][['n_imcs']],
                        config=config_file, 
                        sort.col='PDR',
                        decreasing=FALSE,
