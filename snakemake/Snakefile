@@ -189,7 +189,8 @@ rule compute_imcs:
         pdr = expand("../data/external/Cabezas/raw/WSH/{sample}/PDR/", sample=samples),
         dmrs = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv"
     output:
-        "../data/external/Cabezas/raw/IMCs/"
+        folder = "../data/external/Cabezas/raw/IMCs/",
+		file = "../data/external/Cabezas/raw/IMCs/IMC_annotated.csv"
     conda:
         "rnbeads.yml"
     log:
@@ -197,7 +198,7 @@ rule compute_imcs:
     params:
         config = "../config.yaml"
     shell:
-        "Rscript ../IMC/findIMC.R --rnbset {input.rnbeads}/report/rnbSet_preprocessed/ --output {output} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/  --digest ../scripts/checkForCutSite.R --config {params.config} --digest ../scripts/checkForCutSite.R"
+        "Rscript ../IMC/findIMC.R --rnbset {input.rnbeads}/report/rnbSet_preprocessed/ --output {output.folder} --dmrs ../data/external/Cabezas/raw/DMRs/ --pdrs ../data/external/Cabezas/raw/WSH/  --digest ../scripts/checkForCutSite.R --config {params.config} --digest ../scripts/checkForCutSite.R"
 
 rule compute_qfdrp:
     input:

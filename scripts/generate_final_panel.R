@@ -6,12 +6,12 @@ library(GenomicRanges)
 library(argparse)
 
 parser <- ArgumentParser()
-parser$add_argument("-d", "--dmrs", type="string")
-parser$add_argument("-i", "--imcs", type="string")
-parser$add_argument("-w", "--wsh", type="string", default="../config.yaml")
-parser$add_argument("-n", "--noncut", type="string", default="../config.yaml")
-parser$add_argument("-a", "--always", type="string", default="../config.yaml")
-parser$add_argument("-o", "--output", type="string", default="../config.yaml")
+parser$add_argument("-d", "--dmrs", type="character")
+parser$add_argument("-i", "--imcs", type="character")
+parser$add_argument("-w", "--wsh", type="character")
+parser$add_argument("-n", "--noncut", type="character")
+parser$add_argument("-a", "--always", type="character")
+parser$add_argument("-o", "--output", type="character")
 args <- parser$parse_args()
 
 n_hscs <- 105
@@ -25,11 +25,11 @@ n_meth <- 20
 n_unmeth <- 20
 n_primers <- 10
 
-hsc_dmrs <- list.files(args$dmrs, pattern='_filtered_extended_HSC.csv')
-mpp1_dmrs <- list.files(args$dmrs, pattern='_filtered_extended_MPP1.csv')
-mpp2_dmrs <-  list.files(args$dmrs, pattern='_filtered_extended_MPP2.csv')
-mpp_dmrs <-  list.files(args$dmrs, pattern='_filtered_extended_MPP.csv')
-imrs <- list.files(args$imcs, pattern='IMS_annotated.csv')
+hsc_dmrs <- list.files(args$dmrs, pattern='_filtered_HSC.csv')
+mpp1_dmrs <- list.files(args$dmrs, pattern='_filtered_MPP1.csv')
+mpp2_dmrs <-  list.files(args$dmrs, pattern='_filtered_MPP2.csv')
+mpp_dmrs <-  list.files(args$dmrs, pattern='_filtered_MPP.csv')
+imrs <- list.files(args$imcs, pattern='IMC_annotated.csv')
 wsh <- list.files(args$wsh, pattern='filtered_qFDRP.csv')
 non_cut <- list.files(args$noncut, pattern='non_cut_amplicons.csv')
 always_meth <- list.files(args$always, pattern='always_meth_filtered.csv')
