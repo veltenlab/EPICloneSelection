@@ -104,7 +104,7 @@ generate_always_meth_unmeth:
   error: log/meth_unmeth.err
   output: log/meth_unmeth.out
   queue: short-sl7
-  walltime: 2:00:00
+  walltime: 4:00:00
   virtual_memory: 40
 
 generate_uncut:
@@ -112,6 +112,13 @@ generate_uncut:
   output: log/uncut.out
   queue: short-sl7
   walltime: 2:00:00
+  virtual_memory: 40
+
+select_wsh:
+  error: log/select_wsh.err
+  output: log/select_wsh.out
+  queue: long-sl7
+  walltime: 24:00:00
   virtual_memory: 40
 
 generate_panel:

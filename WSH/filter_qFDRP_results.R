@@ -7,23 +7,27 @@ library(yaml)
 library(data.table)
 library(RnBeads)
 library(RnBeads.mm10)
+library(argparse)
 
-sample_names <- c('GSM1274424',
-                  'GSM1274425',
-                  'GSM1274426')
-res_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH_subsampled/'
-out_folder <- '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/'
-all_dmrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_HSCs.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP1.csv',
-              '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/RnBeads/DMRs/non_pairwise/high_MPP2.csv')
-imcs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/IMS/IMS_annotated_all.csv')
-pdrs <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/PDR_GSM1274424.csv',
-          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/PDR_GSM1274425.csv',
-          '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/PDR_GSM1274426.csv')
-pdr_annotations <- c('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274424/PDR/annotation.RData',
-                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274425/PDR/annotation.RData',
-                     '/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/WSH/GSM1274426/PDR/annotation.RData')
+
+parser <- ArgumentParser()
+parser$add_argument("-s", "--samples", type="character", help='Vector of sample names separated by commas')
+parser$add_argument("-w", "--wsh", type="character")
+parser$add_argument("-o", "--output", type="character")
+parser$add_argument("-i", "--imc", type="character")
+parser$add_argument("-p", "--pdrs", type="character")
+parser$add_argument("-d", "--dmrs", type="character")
+parser$add_argument("-c", "--config", type="character")
+parser$add_argument("-f", "--digest", type="character")
+args <- parser$parse_args()
+
+sample_names <- unlist(strsplit(args$samples, ','))
+res_folder <- args$wsh
+out_folder <- args$output
+all_dmrs <- list.files(args$dmrs, pattern='_filtered_', full.names=TRUE)
+imcs <- args$imc
+pdrs <- unlist(sapply(list.dirs(args$pdrs), function(x){unlist(list.files(file.path(x, 'PDR'), pattern='.csv', full.names=TRUE))}))
+pdr_annotations <- unlist(sapply(list.dirs(args$pdrs), function(x){unlist(list.files(file.path(x, 'PDR'), pattern='.RData', full.names=TRUE))}))
 load(pdr_annotations[1])
 for(i in 2:length(pdr_annotations)){
   last_anno <- annotation
@@ -40,18 +44,18 @@ for(i in 1:length(pdr_annotations)){
 }
 pdr_annotation <- last_anno
 # Include high PDR here
-config_file <- '/users/mscherer/cluster/project/Methylome/src/selection_pipeline/config.yaml'
+config_file <- args$config
 config <- yaml.load_file(config_file)
 
-source('/users/mscherer/cluster/project/Methylome/src/selection_pipeline/checkForCutSite.R')
+source(args$digest)
 
 qfdrps <- lapply(sample_names, function(x){
-  read.csv(paste0(res_folder, x, '/qFDRP_' , x, '.csv'))$x
+  read.csv(paste0(res_folder, x, '/qFDRP', '/qFDRP_' , x, '.csv'))$x
  })
 qfdrps <- data.frame(do.call(cbind, qfdrps))
 colnames(qfdrps) <- sample_names
 qfdrp <- rowMeans(qfdrps)
-load(paste0(paste0(res_folder, sample_names[1], '/'), 'annotation.RData'))
+load(paste0(paste0(res_folder, sample_names[1], '/qFDRP/'), 'annotation.RData'))
 nas <- is.na(qfdrp)
 qfdrp <- qfdrp[!nas]
 annotation <- annotation[!nas]
@@ -83,12 +87,8 @@ res <- checkForCutSite(na.omit(qfdrp),
                        config=config_file, 
                        sort.col=c('qFDRP', 'PDR'),
                        use.extended = TRUE)
-out_folder <- file.path(out_folder, paste0('filtered_qFDRP'))
-if(!dir.exists(out_folder)){
-  system(paste('mkdir', out_folder))
-}
 tfbs_sites <- colnames(res)[(which(colnames(res)=='GCContent')+1):ncol(res)]
 tfbs_frame <- res[, tfbs_sites]
 all_nas <- apply(tfbs_frame, 1, function(x)all(is.na(x)))
 res <- res[!all_nas, ]
-write.csv(res, paste0(out_folder, '/filtered_qFDRP.csv'))
+write.csv(res, paste0(out_folder))

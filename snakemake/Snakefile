@@ -190,7 +190,7 @@ rule compute_imcs:
         dmrs = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv"
     output:
         folder = "../data/external/Cabezas/raw/IMCs/",
-		file = "../data/external/Cabezas/raw/IMCs/IMC_annotated.csv"
+        file = "../data/external/Cabezas/raw/IMCs/IMC_annotated.csv"
     conda:
         "rnbeads.yml"
     log:
@@ -243,9 +243,25 @@ rule generate_uncut:
     shell:
         "Rscript ../scripts/construct_non_cut.R --output {output} --config {params.config}"
 
+rule select_wsh:
+    input: 
+        wsh = expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
+        imc = "../data/external/Cabezas/raw/IMCs/",
+        dmr = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv"
+    output: 
+        "../data/external/Cabezas/raw/WSH_filtered/filtered_qFDRP.csv"
+    conda:
+        "rnbeads.yml"
+    log:
+        "../data/external/Cabezas/raw/WSH/select_WSH.log"
+    params:
+        config = "../config.yaml"
+    shell:
+        "Rscript ../WSH/filter_qFDRP_results.R --samples GSM1274427,GSM1274430 --wsh ../data/external/Cabezas/raw/WSH/ --imc {input.imc}/IMC_annotated_all.csv --pdrs ../data/external/Cabezas/raw/WSH/ --dmrs ../data/external/Cabezas/raw/DMRs/ --config {params.config} --digest ../scripts/checkForCutSite.R --output {output}"
+
 rule generate_panel:
     input:
-        wsh = expand("../data/external/Cabezas/raw/WSH/{sample}/qFDRP/", sample=samples),
+        wsh = "../data/external/Cabezas/raw/WSH_filtered/filtered_qFDRP.csv",
         imc = "../data/external/Cabezas/raw/IMCs/",
         dmr = "../data/external/Cabezas/raw/DMRs/high_filtered_HSC.csv",
         noncut = "../data/external/Cabezas/raw/uncut/uncut.csv",
@@ -257,5 +273,5 @@ rule generate_panel:
     log:
         "../data/external/Cabezas/raw/final_panel/create_panel.log"
     shell:
-        "Rscript ../scripts/generate_final_panel.R --dmrs ../data/external/Cabezas/raw/DMRs/ --imc {input.imc} --wsh ../data/external/Cabezas/raw/WSH/ --noncut {input.noncut} --always {input.always} --output {output}"
+        "Rscript ../scripts/generate_final_panel.R --dmrs ../data/external/Cabezas/raw/DMRs/ --imc {input.imc} --wsh {input.wsh} --noncut {input.noncut} --always {input.always} --output {output}"
 

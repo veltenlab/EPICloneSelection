@@ -25,15 +25,15 @@ n_meth <- 20
 n_unmeth <- 20
 n_primers <- 10
 
-hsc_dmrs <- list.files(args$dmrs, pattern='_filtered_HSC.csv')
-mpp1_dmrs <- list.files(args$dmrs, pattern='_filtered_MPP1.csv')
-mpp2_dmrs <-  list.files(args$dmrs, pattern='_filtered_MPP2.csv')
-mpp_dmrs <-  list.files(args$dmrs, pattern='_filtered_MPP.csv')
-imrs <- list.files(args$imcs, pattern='IMC_annotated.csv')
-wsh <- list.files(args$wsh, pattern='filtered_qFDRP.csv')
-non_cut <- list.files(args$noncut, pattern='non_cut_amplicons.csv')
-always_meth <- list.files(args$always, pattern='always_meth_filtered.csv')
-always_unmeth <- list.files(args$always, pattern='always_unmeth_filtered.csv')
+hsc_dmrs <- read.csv(list.files(args$dmrs, pattern='_filtered_HSC.csv', full.names=TRUE))
+mpp1_dmrs <- read.csv(list.files(args$dmrs, pattern='_filtered_MPP1.csv', full.names=TRUE))
+mpp2_dmrs <-  read.csv(list.files(args$dmrs, pattern='_filtered_MPP2.csv', full.names=TRUE))
+mpp_dmrs <-  read.csv(list.files(args$dmrs, pattern='_filtered_MPP.csv', full.names=TRUE))
+imrs <- read.csv(list.files(args$imcs, pattern='IMC_annotated.csv', full.names=TRUE))
+wsh <- read.csv(args$wsh)
+non_cut <- read.csv(args$noncut)
+always_meth <- read.csv(list.files(args$always, pattern='always_meth_filtered.csv', full.names=TRUE))
+always_unmeth <- read.csv(list.files(args$always, pattern='always_unmeth_filtered.csv', full.names=TRUE))
 
 all_frames <- list(HSC=hsc_dmrs,
                    MPP1=mpp1_dmrs,
