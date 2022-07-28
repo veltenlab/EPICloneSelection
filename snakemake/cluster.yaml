@@ -103,8 +103,8 @@ compute_qfdrp:
 generate_always_meth_unmeth:
   error: log/meth_unmeth.err
   output: log/meth_unmeth.out
-  queue: short-sl7
-  walltime: 4:00:00
+  queue: long-sl7
+  walltime: 12:00:00
   virtual_memory: 40
 
 generate_uncut:

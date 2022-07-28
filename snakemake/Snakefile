@@ -222,8 +222,6 @@ rule generate_always_meth_unmeth:
         "../data/external/Cabezas/raw/meth_unmeth/"
     conda:
         "rnbeads.yml"
-    log:
-        "../data/external/Cabezas/raw/meth_unmeth/always_meth_unmeth.log"
     params:
         config = "../config.yaml"
     shell:
