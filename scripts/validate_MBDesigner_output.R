@@ -54,12 +54,13 @@ validateMBDesigner <- function(csv,
   tfs.files.all <- list.files(config[['annotations']][['tf_chip']],full.names=TRUE)
   tfs.all <- gsub('.bed', '', list.files(config[['annotations']][['tf_chip']]))
   for(tf in tfs.all){
-    dat[,tf] <- NA
+    dat[,paste0(tf, '_ChIP')] <- NA
   }
   cpgs <- makeGRangesFromDataFrame(rnb.annotation2data.frame(rnb.get.annotation("CpG", assembly = gen.version)))
   genes <- unlist(rnb.get.annotation('genes',assembly = gen.version))
   names(genes) <- gsub('chr[[:alnum:]][[:punct:]]', '', names(genes))
   names(genes) <- gsub('chr[[:alnum:]][[:alnum:]][[:punct:]]', '', names(genes))
+  variable_genes <- intersect(variable_genes, names(genes))
   promoters <- unlist(rnb.get.annotation('promoters',assembly = gen.version))
   reg.elements <- read.csv(config[['annotations']][['enhancer_catalog']])
   row.names(reg.elements) <- paste0(reg.elements$Chr,'_',reg.elements$Start)
@@ -72,6 +73,7 @@ validateMBDesigner <- function(csv,
                                          end.field='Start',
                                          keep.extra.columns=TRUE)
   while(i < num){
+    print(i)
     chr <- as.character(dat[i,"chr"])
     seq <- genome[[chr]]
     start <- as.numeric(as.character(dat[i,"amplicon_start"]))
@@ -124,9 +126,9 @@ validateMBDesigner <- function(csv,
       tf.gr <- makeGRangesFromDataFrame(read.table(tfs.files.all[[j]],sep = '\t'),seqnames.field = 'V1', start.field = 'V2', end.field = 'V3')
       op <- findOverlaps(region.gr,tf.gr)
       if(length(op)>0){
-        dat[i,tfs.all[j]] <- tfs.all[j]
+        dat[i,paste0(tfs.all[j], '_ChIP')] <- paste0(tfs.all[j], '_ChIP')
       }else{
-        dat[i,tfs.all[j]] <- NA
+        dat[i,paste0(tfs.all[j], '_ChIP')] <- NA
       }
     }
     pattern.match <- matchPattern(pu1.motif, region.seq, max.mismatch = 1)
@@ -150,160 +152,168 @@ validateMBDesigner <- function(csv,
 }
 
 # What happens with line 499, Always_methylated19
-mb_id <- '4318'
-res <- validateMBDesigner(paste0('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/', mb_id, '-design-summary.csv'))
-input <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_input/CpGs_only.csv')
-output.gr <- makeGRangesFromDataFrame(res, seqnames.field = 'chr', start.field = 'amplicon_start', end.field = 'amplicon_end')
-min_dists <- c()
-for(i in 1:length(output.gr)){
-  min_dists <- c(min_dists, min(distance(output.gr[i], output.gr[-i]), na.rm = TRUE))
-}
-if(sum(min_dists<1000)>50){
-  stop('Many closeby CpGs')
-}
-input.gr <- makeGRangesFromDataFrame(input)
-op <- findOverlaps(input.gr, output.gr, ignore.strand=T)
-if(any(!(1:nrow(res)%in%subjectHits(op)))){
-  print('Something is wrong')
-}
-res <- data.frame(res[subjectHits(op), ], input[queryHits(op), ])
-res$Name <- res$Type
-res$Type[grepl('MPP1_high', res$Type)] <- 'MPPI_high'
-res$Type[grepl('MPP2_high', res$Type)] <- 'MPPII_high'
-res$Type <- gsub('[[:digit:]]', '', res$Type)
-colnames(res)[(ncol(res)-4):(ncol(res)-2)] <- c('Chromosome_CpG', 'Start_CpG', 'End_CpG')
-write.csv(res, paste0('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/', mb_id, '-design-summary_annotated.csv'))
-
-library(ggsci)
-plot_theme <- theme(panel.background = element_blank(),
-                    panel.grid=element_blank(),
-                    text=element_text(color='black',size=6),
-                    axis.text=element_text(color='black',size=5),
-                    axis.ticks=element_blank(),
-                    strip.background = element_blank(),
-                    legend.key=element_rect(color=NA, fill=NA),
-                    #axis.text.x=element_text(angle=45, hjust=1, vjust = 1),
-                    axis.text.x=element_blank(),
-                    axis.title.x=element_blank(),
-                    axis.ticks.x=element_blank(),
-                    legend.title=element_blank(),
-                    panel.spacing = unit(.1, "lines"))
-plot_base <- data.frame(Type=gsub('[[:digit:]]', '', res$Type),
-                      AgingDMC=ifelse(is.na(res$AgingDMC), 'NoDMC', 'DMC'),
-                      Enhancer=ifelse(is.na(res$enhancer_annotation), 'NoEnhancer', 'Enhancers'))
-to_plot <- c()
-for(ty in unique(plot_base$Type)){
-  to_plot <- rbind(to_plot, data.frame(plyr::count(plot_base[plot_base$Type%in%ty, 'AgingDMC']), Type=ty))
-}
-plot <- ggplot(to_plot, aes(x="", y=freq, fill=x))+geom_bar(stat="identity", width=1, color="white")+plot_theme+scale_fill_tron()+ylab("")+xlab("")+facet_wrap(Type~., ncol=3)
-ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicons_aging.pdf',
-       height=100,
-       width=100,
-       unit='mm')
-
-to_plot <- c()
-for(ty in unique(plot_base$Type)){
-  to_plot <- rbind(to_plot, data.frame(plyr::count(plot_base[plot_base$Type%in%ty, 'Enhancer']), Type=ty))
-}
-plot <- ggplot(to_plot, aes(x="", y=freq, fill=x))+geom_bar(stat="identity", width=1, color="white")+plot_theme+scale_fill_tron()+ylab("")+xlab("")+facet_wrap(Type~., ncol=3)
-ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicons_enhancer.pdf',
-       height=100,
-       width=100,
-       unit='mm')
-
-to_plot <- res[, 'Type']
-to_plot[grepl('high', to_plot)] <- 'DMC'
-to_plot <- plyr::count(to_plot)
-colnames(to_plot) <- c('Type', 'Count')
-to_plot <- to_plot[order(to_plot$Count), ]
-to_plot$prop <- to_plot$Count/sum(to_plot$Count) *100
-to_plot$ypos <- cumsum(to_plot$prop)-0.5*to_plot$prop
-plot <- ggplot(to_plot, aes(x="", y=Count, fill=Type))+geom_bar(stat="identity", width=1, color="white")+
-  coord_polar("y", start=0)+plot_theme+scale_fill_tron()+ylab("")+xlab("")+geom_text(aes(label = Count),
-                                                                                     position = position_stack(vjust = 0.5))
-ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_type_distribution.png',
-       height=150,
-       width=150,
-       unit='mm')
-
-dat <- res
-types <- gsub('[0-9]', '', dat$Type)
-types[grep('high', types)] <- 'DMC'
-types[types%in%'IMR'] <- 'IMC'
-to_plot <- plyr::count(types)
-colnames(to_plot) <- c('Type','Count')
-plot_theme <- theme(panel.background = element_blank(),
-                    panel.grid=element_blank(),
-                    text=element_text(color='black',size=10),
-                    axis.text=element_text(color='black',size=5),
-                    axis.ticks=element_blank(),
-                    strip.background = element_blank(),
-                    legend.key=element_rect(color=NA, fill=NA),
-                    #axis.text.x=element_text(angle=45, hjust=1, vjust = 1),
-                    axis.text.x=element_blank(),
-                    axis.title.x=element_blank(),
-                    axis.ticks.x=element_blank(),
-                    legend.title=element_blank(),
-                    panel.spacing = unit(.1, "lines"))
-to_plot$Type <- factor(to_plot$Type, levels=c('Non_cut',
-                                              'Always_methylated',
-                                              'Always_unmethylated',
-                                              'DMC',
-                                              'IMC',
-                                              'WSH'))
-to_plot <- to_plot[order(to_plot$Type), ]
-to_plot$prop <- to_plot$Count/sum(to_plot$Count) *100
-to_plot$ypos <- cumsum(to_plot$prop)-0.5*to_plot$prop
-plot <- ggplot(to_plot, aes(x="", y=Count, fill=Type))+geom_bar(stat="identity", width=1, color="white")+
-  coord_polar("y", start=0)+plot_theme+scale_fill_tron()+ylab("")+xlab("")+geom_text(aes(label = Count),
-                                                                                     position = position_stack(vjust = 0.5))
-ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_type_distribution.png',
-       height=150,
-       width=150,
-       unit='mm')
-
-plot_theme <- theme(panel.background = element_blank(),
-                    panel.grid=element_blank(),
-                    text=element_text(color='black',size=10),
-                    axis.text.x = element_text(angle=45, hjust=1, color='black', size=8),
-                    strip.background = element_blank(),
-                    legend.key=element_rect(color=NA, fill=NA),
-                    #axis.text.x=element_text(angle=45, hjust=1, vjust = 1),
-                    legend.title=element_blank(),
-                    panel.spacing = unit(.1, "lines"))
-
-dat <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/4135-design-summary_annotated.csv')
-types <- gsub('[0-9]', '', dat$Type)
-types[grep('high', types)] <- 'DMC'
-types[types%in%'IMR'] <- 'IMC'
-dat$Type <- types
-tf_names <- colnames(dat)
-start_tf <- which(tf_names%in%'CpGCount')+1
-end_tf <- which(tf_names%in%"Scl")
-tf_names <- tf_names[start_tf:end_tf]
-counts_tfs <- unlist(lapply(tf_names, function(x){
-  sum(!is.na(dat[, x]))
-}))
-to_plot <- data.frame(Count=counts_tfs, TF=tf_names)
-to_plot$TF <- factor(to_plot$TF, levels=to_plot$TF[order(to_plot$Count, decreasing=T)])
-plot <- ggplot(to_plot, aes(x=TF, y=Count))+geom_bar(stat="identity", width=1, color="white")+
-  plot_theme
-ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_TF_all_distribution.png',
-       height=75,
-       width=150,
-       unit='mm')
-
-to_plot <- c()
-for(type in unique(dat$Type)){
-  sel_dat <- subset(dat, subset=Type==type)
-  counts_tfs <- unlist(lapply(tf_names, function(x){
-    sum(!is.na(sel_dat[, x]))
-  }))
-  to_plot <- rbind(to_plot, data.frame(Type=type, TF=factor(tf_names, levels=tf_names[order(counts_tfs, decreasing=TRUE)]), Count=counts_tfs))
-}
-plot <- ggplot(to_plot, aes(x=TF, y=Count))+geom_bar(stat="identity", width=1, color="white")+
-  plot_theme+facet_wrap(Type~., ncol=3)
-ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_TF_stratified.png',
-       height=150,
-       width=300,
-       unit='mm')
+res <- validateMBDesigner('/users/mscherer/cluster/project/Methylome/infos/HSCs/CO475.design-summary.csv')
+write.csv(res, '/users/mscherer/cluster/project/Methylome/infos/HSCs/C0475-design-summary_annotated.csv')
+# mb_id <- '4318'
+# res <- validateMBDesigner(paste0('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/', mb_id, '-design-summary.csv'))
+ input <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_input/CpGs_only.csv')
+ output.gr <- makeGRangesFromDataFrame(res, seqnames.field = 'chr', start.field = 'amplicon_start', end.field = 'amplicon_end')
+ min_dists <- c()
+ for(i in 1:length(output.gr)){
+   min_dists <- c(min_dists, min(distance(output.gr[i], output.gr[-i]), na.rm = TRUE))
+ }
+ if(sum(min_dists<1000)>50){
+   stop('Many closeby CpGs')
+ }
+ input.gr <- makeGRangesFromDataFrame(input)
+ op <- findOverlaps(input.gr, output.gr, ignore.strand=T)
+ if(any(!(1:nrow(res)%in%subjectHits(op)))){
+   print('Something is wrong')
+ }
+ res <- data.frame(res[subjectHits(op), ], input[queryHits(op), ])
+ res$Name <- res$Type
+ res$Type[grepl('MPP1_high', res$Type)] <- 'MPPI_high'
+ res$Type[grepl('MPP2_high', res$Type)] <- 'MPPII_high'
+ res$Type <- gsub('[[:digit:]]', '', res$Type)
+ colnames(res)[(ncol(res)-4):(ncol(res)-2)] <- c('Chromosome_CpG', 'Start_CpG', 'End_CpG')
+ write.csv(res, '/users/mscherer/cluster/project/Methylome/infos/HSCs/C0475-design-summary_annotated.csv')
+ 
+res_extended <- read.table('/users/mscherer/cluster/project/Methylome/infos/HSCs/panel_info_dropout.tsv', sep='\t', row.names=1)
+#res_extended <- res_extended[, !(colnames(res_extended)%in%c(''))]
+res <- data.frame(res, res_extended[row.names(res), setdiff(colnames(res_extended), colnames(res))])
+write.table(res, '/users/mscherer/cluster/project/Methylome/infos/HSCs/panel_info_dropout.tsv', sep='\t')
+# write.csv(res, paste0('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/', mb_id, '-design-summary_annotated.csv'))
+# 
+# library(ggsci)
+# plot_theme <- theme(panel.background = element_blank(),
+#                     panel.grid=element_blank(),
+#                     text=element_text(color='black',size=6),
+#                     axis.text=element_text(color='black',size=5),
+#                     axis.ticks=element_blank(),
+#                     strip.background = element_blank(),
+#                     legend.key=element_rect(color=NA, fill=NA),
+#                     #axis.text.x=element_text(angle=45, hjust=1, vjust = 1),
+#                     axis.text.x=element_blank(),
+#                     axis.title.x=element_blank(),
+#                     axis.ticks.x=element_blank(),
+#                     legend.title=element_blank(),
+#                     panel.spacing = unit(.1, "lines"))
+# plot_base <- data.frame(Type=gsub('[[:digit:]]', '', res$Type),
+#                       AgingDMC=ifelse(is.na(res$AgingDMC), 'NoDMC', 'DMC'),
+#                       Enhancer=ifelse(is.na(res$enhancer_annotation), 'NoEnhancer', 'Enhancers'))
+# to_plot <- c()
+# for(ty in unique(plot_base$Type)){
+#   to_plot <- rbind(to_plot, data.frame(plyr::count(plot_base[plot_base$Type%in%ty, 'AgingDMC']), Type=ty))
+# }
+# plot <- ggplot(to_plot, aes(x="", y=freq, fill=x))+geom_bar(stat="identity", width=1, color="white")+plot_theme+scale_fill_tron()+ylab("")+xlab("")+facet_wrap(Type~., ncol=3)
+# ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicons_aging.pdf',
+#        height=100,
+#        width=100,
+#        unit='mm')
+# 
+# to_plot <- c()
+# for(ty in unique(plot_base$Type)){
+#   to_plot <- rbind(to_plot, data.frame(plyr::count(plot_base[plot_base$Type%in%ty, 'Enhancer']), Type=ty))
+# }
+# plot <- ggplot(to_plot, aes(x="", y=freq, fill=x))+geom_bar(stat="identity", width=1, color="white")+plot_theme+scale_fill_tron()+ylab("")+xlab("")+facet_wrap(Type~., ncol=3)
+# ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicons_enhancer.pdf',
+#        height=100,
+#        width=100,
+#        unit='mm')
+# 
+# to_plot <- res[, 'Type']
+# to_plot[grepl('high', to_plot)] <- 'DMC'
+# to_plot <- plyr::count(to_plot)
+# colnames(to_plot) <- c('Type', 'Count')
+# to_plot <- to_plot[order(to_plot$Count), ]
+# to_plot$prop <- to_plot$Count/sum(to_plot$Count) *100
+# to_plot$ypos <- cumsum(to_plot$prop)-0.5*to_plot$prop
+# plot <- ggplot(to_plot, aes(x="", y=Count, fill=Type))+geom_bar(stat="identity", width=1, color="white")+
+#   coord_polar("y", start=0)+plot_theme+scale_fill_tron()+ylab("")+xlab("")+geom_text(aes(label = Count),
+#                                                                                      position = position_stack(vjust = 0.5))
+# ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_type_distribution.png',
+#        height=150,
+#        width=150,
+#        unit='mm')
+# 
+# dat <- res
+# types <- gsub('[0-9]', '', dat$Type)
+# types[grep('high', types)] <- 'DMC'
+# types[types%in%'IMR'] <- 'IMC'
+# to_plot <- plyr::count(types)
+# colnames(to_plot) <- c('Type','Count')
+# plot_theme <- theme(panel.background = element_blank(),
+#                     panel.grid=element_blank(),
+#                     text=element_text(color='black',size=10),
+#                     axis.text=element_text(color='black',size=5),
+#                     axis.ticks=element_blank(),
+#                     strip.background = element_blank(),
+#                     legend.key=element_rect(color=NA, fill=NA),
+#                     #axis.text.x=element_text(angle=45, hjust=1, vjust = 1),
+#                     axis.text.x=element_blank(),
+#                     axis.title.x=element_blank(),
+#                     axis.ticks.x=element_blank(),
+#                     legend.title=element_blank(),
+#                     panel.spacing = unit(.1, "lines"))
+# to_plot$Type <- factor(to_plot$Type, levels=c('Non_cut',
+#                                               'Always_methylated',
+#                                               'Always_unmethylated',
+#                                               'DMC',
+#                                               'IMC',
+#                                               'WSH'))
+# to_plot <- to_plot[order(to_plot$Type), ]
+# to_plot$prop <- to_plot$Count/sum(to_plot$Count) *100
+# to_plot$ypos <- cumsum(to_plot$prop)-0.5*to_plot$prop
+# plot <- ggplot(to_plot, aes(x="", y=Count, fill=Type))+geom_bar(stat="identity", width=1, color="white")+
+#   coord_polar("y", start=0)+plot_theme+scale_fill_tron()+ylab("")+xlab("")+geom_text(aes(label = Count),
+#                                                                                      position = position_stack(vjust = 0.5))
+# ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_type_distribution.png',
+#        height=150,
+#        width=150,
+#        unit='mm')
+# 
+# plot_theme <- theme(panel.background = element_blank(),
+#                     panel.grid=element_blank(),
+#                     text=element_text(color='black',size=10),
+#                     axis.text.x = element_text(angle=45, hjust=1, color='black', size=8),
+#                     strip.background = element_blank(),
+#                     legend.key=element_rect(color=NA, fill=NA),
+#                     #axis.text.x=element_text(angle=45, hjust=1, vjust = 1),
+#                     legend.title=element_blank(),
+#                     panel.spacing = unit(.1, "lines"))
+# 
+# dat <- read.csv('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/4135-design-summary_annotated.csv')
+# types <- gsub('[0-9]', '', dat$Type)
+# types[grep('high', types)] <- 'DMC'
+# types[types%in%'IMR'] <- 'IMC'
+# dat$Type <- types
+# tf_names <- colnames(dat)
+# start_tf <- which(tf_names%in%'CpGCount')+1
+# end_tf <- which(tf_names%in%"Scl")
+# tf_names <- tf_names[start_tf:end_tf]
+# counts_tfs <- unlist(lapply(tf_names, function(x){
+#   sum(!is.na(dat[, x]))
+# }))
+# to_plot <- data.frame(Count=counts_tfs, TF=tf_names)
+# to_plot$TF <- factor(to_plot$TF, levels=to_plot$TF[order(to_plot$Count, decreasing=T)])
+# plot <- ggplot(to_plot, aes(x=TF, y=Count))+geom_bar(stat="identity", width=1, color="white")+
+#   plot_theme
+# ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_TF_all_distribution.png',
+#        height=75,
+#        width=150,
+#        unit='mm')
+# 
+# to_plot <- c()
+# for(type in unique(dat$Type)){
+#   sel_dat <- subset(dat, subset=Type==type)
+#   counts_tfs <- unlist(lapply(tf_names, function(x){
+#     sum(!is.na(sel_dat[, x]))
+#   }))
+#   to_plot <- rbind(to_plot, data.frame(Type=type, TF=factor(tf_names, levels=tf_names[order(counts_tfs, decreasing=TRUE)]), Count=counts_tfs))
+# }
+# plot <- ggplot(to_plot, aes(x=TF, y=Count))+geom_bar(stat="identity", width=1, color="white")+
+#   plot_theme+facet_wrap(Type~., ncol=3)
+# ggsave('/users/mscherer/cluster/project/Methylome/analysis/selection_pipeline/plots/amplicon_TF_stratified.png',
+#        height=150,
+#        width=300,
+#        unit='mm')
