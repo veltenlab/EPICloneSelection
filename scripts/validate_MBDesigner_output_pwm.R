@@ -225,9 +225,8 @@ for(i in 1:nrow(res)){
   if(length(op)>0){
     res[i, 'pu1_chip'] <- 'PU1'
   }
-  for(j in 1:nrow(hema.motifs)){
-    tf.name <- hema.motifs[j , 'TF']
-    pattern.match <- matchPattern(hema.motifs[j, 'Motif'], region.seq, max.mismatch = 1)
+  for(tf.name in names(hema.motifs.pwm)){
+    pattern.match <- searchSeq(hema.motifs.pwm[[tf.name]], region.seq)
     if(length(pattern.match)>0){
       res[i, tf.name] <- tf.name
     }
@@ -246,7 +245,7 @@ for(i in 1:nrow(res)){
 res_extended <- read.table('/home/mscherer/cluster/project/Methylome/infos/HSCs/panel_info_dropout.tsv', sep='\t', row.names=1)
 #res_extended <- res_extended[, !(colnames(res_extended)%in%c(''))]
 res <- data.frame(res, res_extended[row.names(res), setdiff(colnames(res_extended), colnames(res))])
-write.table(res, '/home/mscherer/cluster/project/Methylome/infos/HSCs/panel_info_dropout_new.tsv', sep='\t')
+write.table(res, '/home/mscherer/cluster/project/Methylome/infos/HSCs/panel_info_dropout_pwm.tsv', sep='\t')
 # write.csv(res, paste0('/home/mscherer/cluster/project/Methylome/analysis/selection_pipeline/MB_output/Designer/', mb_id, '-design-summary_annotated.csv'))
 # 
 # library(ggsci)
