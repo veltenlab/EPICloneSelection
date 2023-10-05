@@ -111,7 +111,7 @@ rule sort_index:
     output:
         "../data/external/Cabezas/raw/{sample}/merged/{sample}_sorted.bam"
     conda:
-        "/users/lvelten/mscherer/conda/envs/bismark.yml"
+        "bismark.yml"
     params:
         s = "{sample}"
     shell:

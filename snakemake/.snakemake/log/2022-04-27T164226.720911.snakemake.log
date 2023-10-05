@@ -1,4 +1,0 @@
-Building DAG of jobs...
-WildcardError in line 55 of /nfs/users/lvelten/project/Methylome/src/selection_pipeline/snakemake/Snakefile:
-Wildcards in input files cannot be determined from output files:
-'sra'

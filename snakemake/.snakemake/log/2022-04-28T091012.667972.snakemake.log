@@ -1,2 +1,0 @@
-SyntaxError in line 171 of /nfs/users/lvelten/project/Methylome/src/selection_pipeline/snakemake/Snakefile:
-Unexpected keyword s in rule definition (Snakefile, line 171)

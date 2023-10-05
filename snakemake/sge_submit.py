@@ -15,7 +15,7 @@ from snakemake.utils import read_job_properties
 
 DEFAULT_JOB_NAME = "snakemake_job"
 QSUB_DEFAULTS = "-cwd -V"
-CLUSTER_CONFIG = "/users/lvelten/project/Methylome/src/selection_pipeline/snakemake/cluster.yaml"
+CLUSTER_CONFIG = "cluster.yaml"
 
 # SGE syntax for options is `-option [value]` and for resources is `-l name=value`
 # we therefore distinguish the two in this script to make it easier to handle.
